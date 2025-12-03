@@ -2,17 +2,9 @@
 # 商品ページに埋め込む予約カレンダーウィジェット
 
 api_version = "2024-10"
+uid = "ff3768fc-ba7d-0138-0c49-68a026c1d65e47c12876"
 type = "theme_app_extension"
+name = "booking-widget"
 
-[capabilities]
-block_progress = true
-
-# このApp Extensionが提供するブロック
-[[extensions.blocks]]
-name = "予約カレンダー"
-target = "section"
-
-[[extensions.blocks]]
-name = "予約カレンダー（インライン）"
-target = "block"
-
+[settings]
+# Theme App Extensionの設定

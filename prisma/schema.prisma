@@ -5,21 +5,30 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// 開発環境: SQLite, 本番環境: PostgreSQL
+// 本番デプロイ時は DATABASE_URL を設定し、provider を "postgresql" に変更
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 // === Shopify Session Management ===
 model Session {
-  id          String    @id
-  shop        String
-  state       String
-  isOnline    Boolean   @default(false)
-  scope       String?
-  expires     DateTime?
-  accessToken String
-  userId      BigInt?
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false)
+  scope         String?
+  expires       DateTime?
+  accessToken   String
+  userId        BigInt?
+  firstName     String?
+  lastName      String?
+  email         String?
+  accountOwner  Boolean   @default(false)
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false)
 }
 
 // === Domain Models ===
@@ -84,7 +93,7 @@ model Resource {
   type   ResourceType
 
   // カスタム属性（スキル、階数など）
-  metadata Json? // { "skills": ["cut", "color"], "floor": 1 }
+  metadata String? // JSON文字列として保存 { "skills": ["cut", "color"], "floor": 1 }
 
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
@@ -131,8 +140,8 @@ model ResourceService {
   serviceId  String
 
   // リソース固有のオーバーライド値
-  customDuration Int?     // カスタム所要時間
-  customPrice    Decimal? // カスタム価格
+  customDuration Int?
+  customPrice    Decimal?
 
   resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   service  Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
@@ -155,7 +164,7 @@ model Schedule {
   endTime   String // "18:00"
 
   // 特定日のオーバーライド（祝日、特別シフトなど）- 高優先度
-  specificDate DateTime? @db.Date
+  specificDate DateTime?
 
   isAvailable Boolean @default(true)
 

@@ -1,0 +1,20 @@
+{
+  "booking_calendar": {
+    "title": "予約カレンダー",
+    "select_location": "店舗を選択",
+    "select_resource": "担当者を選択",
+    "select_date": "日付を選択",
+    "select_time": "時間を選択",
+    "loading": "読み込み中...",
+    "no_slots": "この日は空きがありません",
+    "summary_title": "予約内容",
+    "summary_location": "店舗",
+    "summary_resource": "担当",
+    "summary_datetime": "日時",
+    "reset": "選択をやり直す",
+    "step_location": "店舗選択",
+    "step_resource": "担当選択",
+    "step_datetime": "日時選択"
+  }
+}
+

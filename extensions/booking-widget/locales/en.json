@@ -1,0 +1,20 @@
+{
+  "booking_calendar": {
+    "title": "Booking Calendar",
+    "select_location": "Select Location",
+    "select_resource": "Select Staff",
+    "select_date": "Select Date",
+    "select_time": "Select Time",
+    "loading": "Loading...",
+    "no_slots": "No availability on this day",
+    "summary_title": "Booking Summary",
+    "summary_location": "Location",
+    "summary_resource": "Staff",
+    "summary_datetime": "Date & Time",
+    "reset": "Reset Selection",
+    "step_location": "Location",
+    "step_resource": "Staff",
+    "step_datetime": "Date & Time"
+  }
+}
+

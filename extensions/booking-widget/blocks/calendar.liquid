@@ -1,9 +1,4 @@
-{% comment %}
-  予約カレンダー App Block
-  
-  商品ページに埋め込んで、予約日時の選択とカートへの追加を行う
-  Line Item Propertiesとして予約情報を送信
-{% endcomment %}
+{% comment %}予約カレンダー App Block{% endcomment %}
 
 {% schema %}
 {
@@ -15,20 +10,8 @@
     {
       "type": "text",
       "id": "widget_title",
-      "label": "ウィジェットタイトル",
+      "label": "タイトル",
       "default": "予約日時を選択"
-    },
-    {
-      "type": "text",
-      "id": "default_resource_id",
-      "label": "デフォルトリソースID（任意）",
-      "info": "特定のリソースに固定する場合に設定"
-    },
-    {
-      "type": "text",
-      "id": "default_location_id",
-      "label": "デフォルトロケーションID（任意）",
-      "info": "特定のロケーションに固定する場合に設定"
     },
     {
       "type": "select",
@@ -36,22 +19,9 @@
       "label": "テーマ",
       "options": [
         { "value": "light", "label": "ライト" },
-        { "value": "dark", "label": "ダーク" },
-        { "value": "auto", "label": "自動" }
+        { "value": "dark", "label": "ダーク" }
       ],
       "default": "light"
-    },
-    {
-      "type": "color",
-      "id": "primary_color",
-      "label": "プライマリカラー",
-      "default": "#000000"
-    },
-    {
-      "type": "color",
-      "id": "accent_color",
-      "label": "アクセントカラー",
-      "default": "#4F46E5"
     },
     {
       "type": "range",
@@ -61,75 +31,22 @@
       "max": 60,
       "step": 15,
       "default": 30
-    },
-    {
-      "type": "checkbox",
-      "id": "show_location_selector",
-      "label": "店舗選択を表示",
-      "default": true
-    },
-    {
-      "type": "checkbox",
-      "id": "show_resource_selector",
-      "label": "スタッフ/リソース選択を表示",
-      "default": true
     }
   ]
 }
 {% endschema %}
 
-<div 
-  class="booking-widget" 
-  id="booking-widget-{{ block.id }}"
-  data-block-id="{{ block.id }}"
-  data-product-id="{{ product.id }}"
-  data-variant-id="{{ product.selected_or_first_available_variant.id }}"
-  data-shop-url="{{ shop.permanent_domain }}"
-  data-proxy-base="/apps/booking"
-  data-theme="{{ block.settings.theme }}"
-  data-primary-color="{{ block.settings.primary_color }}"
-  data-accent-color="{{ block.settings.accent_color }}"
-  data-slot-interval="{{ block.settings.slot_interval }}"
-  data-default-resource-id="{{ block.settings.default_resource_id }}"
-  data-default-location-id="{{ block.settings.default_location_id }}"
-  data-show-location="{{ block.settings.show_location_selector }}"
-  data-show-resource="{{ block.settings.show_resource_selector }}"
-  style="
-    --booking-primary: {{ block.settings.primary_color }};
-    --booking-accent: {{ block.settings.accent_color }};
-  "
->
-  <!-- ローディング表示 -->
-  <div class="booking-widget__loading" data-loading>
+<div class="booking-widget" data-proxy-base="/apps/booking" data-theme="{{ block.settings.theme }}" data-slot-interval="{{ block.settings.slot_interval }}">
+  <div data-loading style="display:flex;flex-direction:column;align-items:center;padding:40px">
     <div class="booking-widget__spinner"></div>
     <p>読み込み中...</p>
   </div>
 
-  <!-- メインコンテンツ -->
-  <div class="booking-widget__content" data-content style="display: none;">
-    
-    <!-- ヘッダー -->
+  <div data-content style="display:none">
     <div class="booking-widget__header">
       <h3 class="booking-widget__title">{{ block.settings.widget_title }}</h3>
     </div>
 
-    <!-- ステップインジケーター -->
-    <div class="booking-widget__steps">
-      <div class="booking-widget__step" data-step="1">
-        <span class="booking-widget__step-number">1</span>
-        <span class="booking-widget__step-label">店舗選択</span>
-      </div>
-      <div class="booking-widget__step" data-step="2">
-        <span class="booking-widget__step-number">2</span>
-        <span class="booking-widget__step-label">担当選択</span>
-      </div>
-      <div class="booking-widget__step" data-step="3">
-        <span class="booking-widget__step-number">3</span>
-        <span class="booking-widget__step-label">日時選択</span>
-      </div>
-    </div>
-
-    <!-- Step 1: ロケーション選択 -->
     <div class="booking-widget__section" data-section="location">
       <label class="booking-widget__label">店舗を選択</label>
       <select class="booking-widget__select" data-location-select>
@@ -137,83 +54,48 @@
       </select>
     </div>
 
-    <!-- Step 2: リソース選択 -->
-    <div class="booking-widget__section" data-section="resource" style="display: none;">
+    <div class="booking-widget__section" data-section="resource" style="display:none">
       <label class="booking-widget__label">担当者を選択</label>
-      <div class="booking-widget__resource-list" data-resource-list>
-        <!-- JavaScriptで動的に生成 -->
-      </div>
+      <div data-resource-list></div>
     </div>
 
-    <!-- Step 3: 日付選択 -->
-    <div class="booking-widget__section" data-section="calendar" style="display: none;">
+    <div class="booking-widget__section" data-section="calendar" style="display:none">
       <label class="booking-widget__label">日付を選択</label>
-      
-      <!-- カレンダーナビゲーション -->
       <div class="booking-widget__calendar-nav">
-        <button type="button" class="booking-widget__nav-btn" data-prev-month>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+        <button type="button" class="booking-widget__nav-btn" data-prev-month>◀</button>
         <span class="booking-widget__month-year" data-month-year></span>
-        <button type="button" class="booking-widget__nav-btn" data-next-month>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
+        <button type="button" class="booking-widget__nav-btn" data-next-month>▶</button>
       </div>
-
-      <!-- カレンダーグリッド -->
       <div class="booking-widget__calendar">
         <div class="booking-widget__weekdays">
-          <span>日</span>
-          <span>月</span>
-          <span>火</span>
-          <span>水</span>
-          <span>木</span>
-          <span>金</span>
-          <span>土</span>
+          <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
         </div>
-        <div class="booking-widget__days" data-calendar-days>
-          <!-- JavaScriptで動的に生成 -->
-        </div>
+        <div class="booking-widget__days" data-calendar-days></div>
       </div>
     </div>
 
-    <!-- Step 4: 時間スロット選択 -->
-    <div class="booking-widget__section" data-section="slots" style="display: none;">
-      <label class="booking-widget__label">
-        <span data-selected-date-display></span>の空き時間
-      </label>
-      <div class="booking-widget__slots" data-slot-list>
-        <!-- JavaScriptで動的に生成 -->
-      </div>
+    <div class="booking-widget__section" data-section="slots" style="display:none">
+      <label class="booking-widget__label"><span data-selected-date-display></span>の空き時間</label>
+      <div class="booking-widget__slots" data-slot-list></div>
     </div>
 
-    <!-- 選択内容サマリー -->
-    <div class="booking-widget__summary" data-summary style="display: none;">
+    <div class="booking-widget__summary" data-summary style="display:none">
       <h4 class="booking-widget__summary-title">予約内容</h4>
-      <div class="booking-widget__summary-content">
-        <div class="booking-widget__summary-item">
-          <span class="booking-widget__summary-label">店舗</span>
-          <span class="booking-widget__summary-value" data-summary-location>-</span>
-        </div>
-        <div class="booking-widget__summary-item">
-          <span class="booking-widget__summary-label">担当</span>
-          <span class="booking-widget__summary-value" data-summary-resource>-</span>
-        </div>
-        <div class="booking-widget__summary-item">
-          <span class="booking-widget__summary-label">日時</span>
-          <span class="booking-widget__summary-value" data-summary-datetime>-</span>
-        </div>
+      <div class="booking-widget__summary-item">
+        <span class="booking-widget__summary-label">店舗</span>
+        <span class="booking-widget__summary-value" data-summary-location>-</span>
       </div>
-      <button type="button" class="booking-widget__reset-btn" data-reset>
-        選択をやり直す
-      </button>
+      <div class="booking-widget__summary-item">
+        <span class="booking-widget__summary-label">担当</span>
+        <span class="booking-widget__summary-value" data-summary-resource>-</span>
+      </div>
+      <div class="booking-widget__summary-item">
+        <span class="booking-widget__summary-label">日時</span>
+        <span class="booking-widget__summary-value" data-summary-datetime>-</span>
+      </div>
+      <button type="button" class="booking-widget__reset-btn" data-reset>選択をやり直す</button>
     </div>
 
-    <!-- 隠しフィールド（Line Item Properties） -->
     <input type="hidden" name="properties[_BookingStart]" data-booking-start value="">
     <input type="hidden" name="properties[_BookingEnd]" data-booking-end value="">
     <input type="hidden" name="properties[_ResourceId]" data-resource-id value="">
@@ -222,11 +104,8 @@
     <input type="hidden" name="properties[_LocationName]" data-location-name value="">
     <input type="hidden" name="properties[予約日時]" data-display-datetime value="">
 
-    <!-- エラー表示 -->
-    <div class="booking-widget__error" data-error style="display: none;">
+    <div class="booking-widget__error" data-error style="display:none">
       <p data-error-message></p>
     </div>
-
   </div>
 </div>
-
