@@ -1,0 +1,38 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "9fdc5d85e1fc161364b24cc8219516ea"
+name = "booking-app"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
+
+[webhooks]
+api_version = "2026-01"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "locations/create" ]
+  uri = "/webhooks/app/locations_create"
+
+  [[webhooks.subscriptions]]
+  topics = [ "locations/update" ]
+  uri = "/webhooks/app/locations_update"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+# write_products: 商品管理
+# read_locations: ロケーション情報の読み取り
+scopes = "write_products,read_locations"
+
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]

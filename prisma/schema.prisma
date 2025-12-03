@@ -1,0 +1,216 @@
+// prisma/schema.prisma
+// Shopify Unified Booking App - Multi-Location & Scalable
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// === Shopify Session Management ===
+model Session {
+  id          String    @id
+  shop        String
+  state       String
+  isOnline    Boolean   @default(false)
+  scope       String?
+  expires     DateTime?
+  accessToken String
+  userId      BigInt?
+}
+
+// === Domain Models ===
+
+// マーチャントのショップ情報
+model Shop {
+  id        String   @id // Shopify Domain (e.g. store.myshopify.com)
+  name      String?
+  plan      String?
+
+  // Relations
+  locations Location[]
+  resources Resource[]
+  services  Service[]
+  bookings  Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Shopify Admin APIから同期されるロケーション
+// LOCATIONS_CREATE / LOCATIONS_UPDATE webhookで更新
+model Location {
+  id                String   @id @default(uuid())
+  shopifyLocationId String   @unique // gid://shopify/Location/12345
+  shopId            String
+  name              String
+  address1          String?
+  address2          String?
+  city              String?
+  province          String?
+  country           String?
+  zip               String?
+  phone             String?
+  isActive          Boolean  @default(true)
+  timezone          String   @default("Asia/Tokyo")
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  // Relations
+  schedules Schedule[]
+  bookings  Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId])
+}
+
+// リソースの種類
+enum ResourceType {
+  STAFF     // 容量=1、複数店舗を兼務可能（美容師など）
+  ROOM      // 容量=1、特定店舗に固定（会議室、施術室など）
+  EQUIPMENT // 容量>=1（機材、器具など）
+}
+
+// 予約可能なリソース（スタッフ、部屋、機材）
+model Resource {
+  id     String       @id @default(uuid())
+  shopId String
+  name   String // "スタイリスト佐藤", "Room A"
+  type   ResourceType
+
+  // カスタム属性（スキル、階数など）
+  metadata Json? // { "skills": ["cut", "color"], "floor": 1 }
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  // Relations
+  schedules        Schedule[]
+  resourceServices ResourceService[]
+  bookings         Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId])
+}
+
+// サービス（メニュー）- Shopify Productと紐付け
+model Service {
+  id     String @id @default(uuid())
+  shopId String
+
+  // Shopify Product連携
+  productId String  // gid://shopify/Product/12345
+  variantId String?
+
+  name          String // "カット＆カラー 60分"
+  durationMin   Int // 基本所要時間（分）
+  bufferTimeMin Int    @default(0) // 前後の準備時間（分）
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  // Relations
+  resourceServices ResourceService[]
+  bookings         Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId])
+}
+
+// リソース×サービスの中間テーブル（どのリソースがどのサービスを提供可能か）
+model ResourceService {
+  id         String @id @default(uuid())
+  resourceId String
+  serviceId  String
+
+  // リソース固有のオーバーライド値
+  customDuration Int?     // カスタム所要時間
+  customPrice    Decimal? // カスタム価格
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  service  Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([resourceId, serviceId])
+}
+
+// スケジュール（利用可能時間）
+// 重要: リソースXがロケーションYで利用可能な時間を定義
+model Schedule {
+  id         String @id @default(uuid())
+  resourceId String
+  locationId String // マルチロケーション対応の核心
+
+  dayOfWeek Int    // 0=日, 1=月, 2=火...6=土
+  startTime String // "09:00"
+  endTime   String // "18:00"
+
+  // 特定日のオーバーライド（祝日、特別シフトなど）- 高優先度
+  specificDate DateTime? @db.Date
+
+  isAvailable Boolean @default(true)
+
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resourceId, locationId])
+  @@index([specificDate])
+}
+
+// 予約ステータス
+enum BookingStatus {
+  PENDING_PAYMENT // カート内
+  CONFIRMED       // 決済完了
+  CANCELLED       // キャンセル
+}
+
+// 予約レコード
+model Booking {
+  id         String @id @default(uuid())
+  shopId     String
+  locationId String // 予約が行われる店舗
+
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id])
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  startAt DateTime // UTC
+  endAt   DateTime // UTC
+
+  status BookingStatus @default(PENDING_PAYMENT)
+
+  // Shopify連携
+  orderId    String?
+  lineItemId String?
+
+  // 顧客情報
+  customerEmail String?
+  customerName  String?
+  customerPhone String?
+  notes         String?
+
+  shop     Shop     @relation(fields: [shopId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resourceId, startAt, endAt])
+  @@index([locationId])
+  @@index([shopId])
+  @@index([status])
+}
