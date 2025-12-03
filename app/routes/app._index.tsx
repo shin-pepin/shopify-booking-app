@@ -28,6 +28,7 @@ interface LoaderData {
   shop: string;
   locations: LocationData[];
   lastSyncedAt: string | null;
+  resourceCount: number;
   usage: {
     currentUsage: number;
     usageLimit: number;
@@ -56,6 +57,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   // 使用量情報を取得
   const usageInfo = await getShopUsageInfo(shop);
+
+  // リソース数を取得
+  const resourceCount = await db.resource.count({
+    where: { shopId: shop },
+  });
 
   // ロケーション一覧を取得
   const locations = await db.location.findMany({
@@ -90,6 +96,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       updatedAt: loc.updatedAt.toISOString(),
     })),
     lastSyncedAt: lastSyncedAt?.toISOString() || null,
+    resourceCount,
     usage: {
       currentUsage: usageInfo.currentUsage,
       usageLimit: usageInfo.usageLimit,
@@ -178,7 +185,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 // === Component ===
 export default function Index() {
-  const { locations, lastSyncedAt, usage } = useLoaderData<LoaderData>();
+  const { locations, lastSyncedAt, usage, resourceCount } = useLoaderData<LoaderData>();
   const fetcher = useFetcher<{ success: boolean; syncedCount?: number }>();
   const shopify = useAppBridge();
 
@@ -220,6 +227,9 @@ export default function Index() {
     return "#10B981";
   };
 
+  // オンボーディング状態の判定
+  const isOnboardingComplete = locations.length > 0 && resourceCount > 0;
+
   return (
     <s-page heading="予約システム管理">
       <s-button
@@ -229,6 +239,55 @@ export default function Index() {
       >
         Shopifyから同期
       </s-button>
+
+      {/* オンボーディング（未完了の場合のみ表示） */}
+      {!isOnboardingComplete && (
+        <s-section heading="セットアップを始めましょう">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-heading>予約受付開始までのステップ</s-heading>
+              
+              <s-stack direction="block" gap="tight">
+                <s-stack direction="inline" gap="base">
+                  <s-text>{locations.length > 0 ? "✅" : "⬜"}</s-text>
+                  <s-text><strong>STEP 1: ロケーション（店舗）の同期</strong></s-text>
+                </s-stack>
+                {locations.length === 0 && (
+                  <s-text tone="subdued" style={{ marginLeft: "24px" }}>
+                    右上の「Shopifyから同期」ボタンを押してください。
+                  </s-text>
+                )}
+              </s-stack>
+
+              <s-stack direction="block" gap="tight">
+                <s-stack direction="inline" gap="base">
+                  <s-text>{resourceCount > 0 ? "✅" : "⬜"}</s-text>
+                  <s-text><strong>STEP 2: リソース（スタッフ・部屋）の登録</strong></s-text>
+                </s-stack>
+                {resourceCount === 0 && (
+                  <s-text tone="subdued" style={{ marginLeft: "24px" }}>
+                    <s-link href="/app/resources">リソース管理</s-link>からスタッフや部屋を登録しましょう。
+                  </s-text>
+                )}
+              </s-stack>
+
+              <s-stack direction="block" gap="tight">
+                <s-stack direction="inline" gap="base">
+                  <s-text>⬜</s-text>
+                  <s-text><strong>STEP 3: ストアへのカレンダー設置</strong></s-text>
+                </s-stack>
+                <s-text tone="subdued" style={{ marginLeft: "24px" }}>
+                  Shopifyのテーマエディタで商品ページにカレンダーを追加します。
+                </s-text>
+              </s-stack>
+
+              <s-button url="/app/guide" variant="primary">
+                詳しい使い方ガイドを見る
+              </s-button>
+            </s-stack>
+          </s-box>
+        </s-section>
+      )}
 
       {/* 使用量セクション */}
       <s-section heading="今月の予約状況">
@@ -378,6 +437,10 @@ export default function Index() {
           <s-stack direction="inline" gap="base">
             <s-text>有効なロケーション:</s-text>
             <s-text><strong>{locations.filter((l) => l.isActive).length}</strong></s-text>
+          </s-stack>
+          <s-stack direction="inline" gap="base">
+            <s-text>登録リソース数:</s-text>
+            <s-text><strong>{resourceCount}</strong></s-text>
           </s-stack>
         </s-stack>
       </s-section>

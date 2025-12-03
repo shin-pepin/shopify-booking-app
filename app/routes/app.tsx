@@ -25,6 +25,7 @@ export default function App() {
         <s-link href="/app/line">LINE連携</s-link>
         <s-link href="/app/settings">手付金設定</s-link>
         <s-link href="/app/billing">料金プラン</s-link>
+        <s-link href="/app/guide">使い方ガイド</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>
