@@ -36,3 +36,10 @@ scopes = "write_products,read_locations"
 
 [auth]
 redirect_urls = [ "https://example.com/api/auth" ]
+
+# App Proxy設定
+# ストアフロントから /apps/booking/* でアクセス可能
+[app_proxy]
+url = "https://example.com/app/proxy"
+subpath = "booking"
+prefix = "apps"

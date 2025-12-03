@@ -1,0 +1,18 @@
+# Booking Validation - Shopify Function
+# Cart Validation APIを使用して予約の整合性を検証
+
+api_version = "2024-10"
+type = "function"
+
+[[extensions.targeting]]
+target = "purchase.validation"
+input_query = "src/run.graphql"
+export = "run"
+
+[extensions.build]
+command = "npm exec -- esbuild src/run.js --bundle --outfile=dist/function.js --format=esm --target=esnext"
+path = "dist/function.js"
+
+[extensions.ui]
+enable_create = false
+

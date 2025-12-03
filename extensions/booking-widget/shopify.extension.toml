@@ -1,0 +1,18 @@
+# Booking Widget - Theme App Extension
+# 商品ページに埋め込む予約カレンダーウィジェット
+
+api_version = "2024-10"
+type = "theme_app_extension"
+
+[capabilities]
+block_progress = true
+
+# このApp Extensionが提供するブロック
+[[extensions.blocks]]
+name = "予約カレンダー"
+target = "section"
+
+[[extensions.blocks]]
+name = "予約カレンダー（インライン）"
+target = "block"
+
