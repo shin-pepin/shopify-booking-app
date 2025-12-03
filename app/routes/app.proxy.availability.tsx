@@ -170,8 +170,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     // ロケーションのタイムゾーンを取得
     const timezone = location.timezone || "Asia/Tokyo";
 
-    // 空き枠を計算
+    // 空き枠を計算（shopIdを渡してクォータチェックを有効化）
     const result = await getAvailableSlots({
+      shopId: shop,
       locationId,
       resourceId,
       date,
@@ -182,6 +183,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
 
     if (!result.success) {
+      // クォータ制限の場合は専用エラーを返す
+      if (result.quotaLimitReached) {
+        return jsonResponse(
+          { 
+            success: false, 
+            error: "予約上限に達しています。しばらく経ってから再度お試しください。",
+            quotaLimitReached: true,
+          },
+          429
+        );
+      }
       return jsonResponse(
         { success: false, error: result.error || "空き枠の取得に失敗しました" },
         500

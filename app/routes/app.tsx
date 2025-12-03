@@ -19,7 +19,12 @@ export default function App() {
     <AppProvider embedded apiKey={apiKey}>
       <s-app-nav>
         <s-link href="/app">ホーム</s-link>
+        <s-link href="/app/bookings">予約管理</s-link>
         <s-link href="/app/resources">リソース管理</s-link>
+        <s-link href="/app/organization">多店舗管理</s-link>
+        <s-link href="/app/line">LINE連携</s-link>
+        <s-link href="/app/settings">手付金設定</s-link>
+        <s-link href="/app/billing">料金プラン</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>

@@ -49,4 +49,13 @@
 .bw-empty{text-align:center;padding:24px;color:var(--bw-muted);font-size:12px}
 .booking-widget__error{background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:6px;padding:10px;margin-top:12px}
 .booking-widget__error p{margin:0;font-size:12px;color:#ef4444}
+/* Selling Plan選択 */
+.booking-widget__selling-plans{display:flex;flex-direction:column;gap:8px}
+.bw-sp{display:flex;flex-direction:column;padding:14px;background:var(--bw-bg);border:1px solid var(--bw-border);border-radius:8px;cursor:pointer;text-align:left;width:100%}
+.bw-sp:hover{border-color:var(--bw-accent)}
+.bw-sp--sel{border-color:var(--bw-accent);background:rgba(79,70,229,.05);box-shadow:inset 0 0 0 1px var(--bw-accent)}
+.bw-sp-name{font-size:14px;font-weight:500;color:var(--bw-text)}
+.bw-sp-desc{font-size:11px;color:var(--bw-muted);margin-top:4px}
+.booking-widget__note{font-size:11px;color:var(--bw-muted);margin-top:8px;padding:8px;background:var(--bw-bg2);border-radius:4px}
+.booking-widget__note small{display:block}
 @media(max-width:480px){.booking-widget{padding:14px}.booking-widget__step-label{display:none}.booking-widget__slots{grid-template-columns:repeat(2,1fr)}}

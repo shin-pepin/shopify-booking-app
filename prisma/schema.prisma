@@ -33,12 +33,97 @@ model Session {
 
 // === Domain Models ===
 
+// 料金プランの種類
+enum PlanType {
+  FREE     // 無料: 30件/月
+  STANDARD // $9/月: 100件/月
+  PRO      // $29/月: 500件/月
+  MAX      // $79/月: 無制限
+}
+
+// === 組織・多店舗管理（Maxプラン専用） ===
+
+// 組織（複数店舗をまとめる親アカウント）
+model Organization {
+  id          String   @id @default(uuid())
+  name        String   // 組織名（例: "株式会社ABC美容室"）
+  
+  // オーナー情報
+  ownerEmail  String   // オーナーのメールアドレス
+  ownerName   String?  // オーナー名
+  
+  // 設定
+  logoUrl     String?  // 組織ロゴURL
+  timezone    String   @default("Asia/Tokyo")
+  
+  // Relations
+  shops       Shop[]
+  staffMembers StaffMember[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([ownerEmail])
+}
+
+// スタッフの役割
+enum StaffRole {
+  OWNER       // オーナー: 全店舗アクセス可能、全権限
+  MANAGER     // マネージャー: 指定店舗の管理権限
+  STAFF       // スタッフ: 指定店舗の閲覧・予約管理のみ
+  VIEWER      // 閲覧者: 閲覧のみ
+}
+
+// スタッフメンバー（組織に所属するユーザー）
+model StaffMember {
+  id              String       @id @default(uuid())
+  organizationId  String
+  
+  // 認証情報
+  email           String       // ログイン用メールアドレス
+  name            String?      // 表示名
+  
+  // 権限
+  role            StaffRole    @default(STAFF)
+  
+  // アクセス可能な店舗（OWNERは全店舗、それ以外は指定店舗のみ）
+  // 空の場合は role=OWNER で全店舗アクセス
+  allowedShopIds  String?      // カンマ区切りの店舗ID（例: "shop1.myshopify.com,shop2.myshopify.com"）
+  
+  // 状態
+  isActive        Boolean      @default(true)
+  lastLoginAt     DateTime?
+  invitedAt       DateTime     @default(now())
+  acceptedAt      DateTime?
+  
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@index([email])
+}
+
 // マーチャントのショップ情報
 model Shop {
   id        String   @id // Shopify Domain (e.g. store.myshopify.com)
   name      String?
-  plan      String?
-
+  
+  // 組織への所属（Maxプラン用）
+  organizationId   String?  // 組織に所属している場合
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  
+  // 料金プラン
+  planType         PlanType @default(FREE)
+  planName         String?  // Shopify Billing API から取得したプラン名
+  billingId        String?  // Shopify Billing API の課金ID
+  
+  // 使用量管理
+  currentMonthUsage Int      @default(0)  // 今月の予約数
+  usageCycleStart   DateTime @default(now()) // 使用量サイクル開始日
+  
   // Relations
   locations Location[]
   resources Resource[]
@@ -47,6 +132,8 @@ model Shop {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@index([organizationId])
 }
 
 // Shopify Admin APIから同期されるロケーション
@@ -207,10 +294,14 @@ model Booking {
   lineItemId String?
 
   // 顧客情報
+  customerId    String? // Shopify Customer ID
   customerEmail String?
   customerName  String?
   customerPhone String?
   notes         String?
+
+  // LINE通知送信済みフラグ
+  lineNotificationSent Boolean @default(false)
 
   shop     Shop     @relation(fields: [shopId], references: [id])
   location Location @relation(fields: [locationId], references: [id])
@@ -222,4 +313,64 @@ model Booking {
   @@index([locationId])
   @@index([shopId])
   @@index([status])
+  @@index([customerId])
+}
+
+// === LINE連携 ===
+
+// ショップごとのLINE設定（Pro/Maxプラン専用）
+model LineConfig {
+  id              String  @id @default(uuid())
+  shopId          String  @unique
+  
+  // LINE Messaging API設定
+  channelId       String  // LINE Channel ID
+  channelSecret   String  // LINE Channel Secret（暗号化推奨）
+  accessToken     String  // LINE Channel Access Token（暗号化推奨）
+  
+  // Webhook設定
+  webhookSecret   String? // Webhook署名検証用シークレット
+  
+  // 通知設定
+  notifyOnConfirm Boolean @default(true)  // 予約確定時に通知
+  notifyOnCancel  Boolean @default(true)  // キャンセル時に通知
+  notifyReminder  Boolean @default(false) // リマインダー通知
+  reminderHours   Int     @default(24)    // リマインダー何時間前
+  
+  // 有効/無効
+  isEnabled       Boolean @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ShopifyカスタマーとLINEユーザーの紐付け
+model LineUserLink {
+  id              String   @id @default(uuid())
+  shopId          String
+  
+  // Shopify側
+  customerId      String   // Shopify Customer ID (gid://shopify/Customer/...)
+  customerEmail   String?
+  
+  // LINE側
+  lineUserId      String   // LINE User ID
+  lineDisplayName String?
+  linePictureUrl  String?
+  
+  // 連携状態
+  isLinked        Boolean  @default(true)
+  linkedAt        DateTime @default(now())
+  
+  // 通知設定（ユーザー個別）
+  notifyEnabled   Boolean  @default(true)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([shopId, customerId])
+  @@unique([shopId, lineUserId])
+  @@index([shopId])
+  @@index([customerId])
+  @@index([lineUserId])
 }

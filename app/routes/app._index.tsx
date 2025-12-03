@@ -6,9 +6,10 @@ import type {
 } from "react-router";
 import { useLoaderData, useFetcher } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { authenticate } from "../shopify.server";
+import { authenticate, BILLING_PLANS } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import db from "../db.server";
+import { getShopUsageInfo, type UsageInfo } from "../services/quota.server";
 
 // === Types ===
 interface LocationData {
@@ -27,9 +28,18 @@ interface LoaderData {
   shop: string;
   locations: LocationData[];
   lastSyncedAt: string | null;
+  usage: {
+    currentUsage: number;
+    usageLimit: number;
+    remaining: number;
+    usagePercentage: number;
+    isLimitReached: boolean;
+    planName: string;
+    cycleEnd: string;
+  };
 }
 
-// === Loader: DBからロケーション一覧を取得 ===
+// === Loader: DBからロケーション一覧と使用量を取得 ===
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
@@ -43,6 +53,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       name: shop,
     },
   });
+
+  // 使用量情報を取得
+  const usageInfo = await getShopUsageInfo(shop);
 
   // ロケーション一覧を取得
   const locations = await db.location.findMany({
@@ -77,6 +90,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       updatedAt: loc.updatedAt.toISOString(),
     })),
     lastSyncedAt: lastSyncedAt?.toISOString() || null,
+    usage: {
+      currentUsage: usageInfo.currentUsage,
+      usageLimit: usageInfo.usageLimit,
+      remaining: usageInfo.remaining,
+      usagePercentage: usageInfo.usagePercentage,
+      isLimitReached: usageInfo.isLimitReached,
+      planName: usageInfo.planName,
+      cycleEnd: usageInfo.cycleEnd.toISOString(),
+    },
   };
 };
 
@@ -156,7 +178,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 // === Component ===
 export default function Index() {
-  const { locations, lastSyncedAt } = useLoaderData<LoaderData>();
+  const { locations, lastSyncedAt, usage } = useLoaderData<LoaderData>();
   const fetcher = useFetcher<{ success: boolean; syncedCount?: number }>();
   const shopify = useAppBridge();
   const [isAnimating, setIsAnimating] = useState(false);
@@ -172,7 +194,6 @@ export default function Index() {
   }, [fetcher.data, shopify]);
 
   useEffect(() => {
-    // 初回ロード時のアニメーション
     setIsAnimating(true);
   }, []);
 
@@ -198,6 +219,12 @@ export default function Index() {
     return parts.length > 0 ? parts.join(", ") : "住所未設定";
   };
 
+  const getProgressBarColor = (percentage: number) => {
+    if (percentage >= 90) return "#EF4444"; // 赤
+    if (percentage >= 70) return "#F59E0B"; // 黄
+    return "#10B981"; // 緑
+  };
+
   return (
     <s-page heading="予約システム管理">
       <s-button
@@ -207,6 +234,86 @@ export default function Index() {
       >
         Shopifyから同期
       </s-button>
+
+      {/* 使用量セクション */}
+      <s-section heading="今月の予約状況">
+        <s-box
+          padding="base"
+          borderWidth="base"
+          borderRadius="base"
+          background={usage.isLimitReached ? "subdued" : "subdued"}
+        >
+          <s-stack direction="block" gap="base">
+            <s-stack direction="inline" gap="base" wrap={false}>
+              <s-stack direction="block" gap="tight" style={{ flex: 1 }}>
+                <s-stack direction="inline" gap="tight">
+                  <s-heading>
+                    {usage.currentUsage} / {usage.usageLimit === Infinity ? "∞" : usage.usageLimit}
+                  </s-heading>
+                  <s-badge tone={usage.isLimitReached ? "critical" : "info"}>
+                    {usage.planName}プラン
+                  </s-badge>
+                </s-stack>
+                <s-text tone="subdued">
+                  予約件数 | 次回リセット: {formatDate(usage.cycleEnd)}
+                </s-text>
+              </s-stack>
+              {usage.isLimitReached && (
+                <s-button variant="primary">
+                  プランをアップグレード
+                </s-button>
+              )}
+            </s-stack>
+
+            {/* プログレスバー */}
+            {usage.usageLimit !== Infinity && (
+              <div style={{ width: "100%" }}>
+                <div
+                  style={{
+                    width: "100%",
+                    height: "8px",
+                    backgroundColor: "#E5E7EB",
+                    borderRadius: "4px",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${Math.min(usage.usagePercentage, 100)}%`,
+                      height: "100%",
+                      backgroundColor: getProgressBarColor(usage.usagePercentage),
+                      borderRadius: "4px",
+                      transition: "width 0.5s ease",
+                    }}
+                  />
+                </div>
+                <s-stack direction="inline" gap="base" style={{ marginTop: "8px" }}>
+                  <s-text tone="subdued">
+                    残り {usage.remaining} 件
+                  </s-text>
+                  <s-text tone="subdued">
+                    ({Math.round(usage.usagePercentage)}% 使用)
+                  </s-text>
+                </s-stack>
+              </div>
+            )}
+
+            {usage.isLimitReached && (
+              <s-box
+                padding="base"
+                borderWidth="base"
+                borderRadius="base"
+                background="subdued"
+                style={{ borderColor: "#EF4444" }}
+              >
+                <s-text tone="critical">
+                  ⚠️ 予約上限に達しました。新しい予約を受け付けるには、プランをアップグレードしてください。
+                </s-text>
+              </s-box>
+            )}
+          </s-stack>
+        </s-box>
+      </s-section>
 
       {/* ヘッダーセクション */}
       <s-section heading="店舗ロケーション">
@@ -275,27 +382,31 @@ export default function Index() {
         )}
       </s-section>
 
-      {/* サイドバー: クイックガイド */}
-      <s-section slot="aside" heading="セットアップガイド">
+      {/* サイドバー: プラン情報 */}
+      <s-section slot="aside" heading="現在のプラン">
         <s-stack direction="block" gap="base">
-          <s-text tone="subdued">Phase 1: ロケーション同期</s-text>
-          <s-unordered-list>
-            <s-list-item>
-              <s-text
-                {...(locations.length > 0
-                  ? { fontWeight: "bold" }
-                  : {})}
-              >
-                ✓ ロケーション同期
+          <s-box
+            padding="base"
+            borderWidth="base"
+            borderRadius="base"
+            background="subdued"
+          >
+            <s-stack direction="block" gap="tight">
+              <s-heading>{usage.planName}</s-heading>
+              <s-text tone="subdued">
+                {usage.usageLimit === Infinity
+                  ? "無制限の予約"
+                  : `${usage.usageLimit}件/月`}
               </s-text>
-            </s-list-item>
-            <s-list-item>
-              <s-text tone="subdued">リソース管理（次のステップ）</s-text>
-            </s-list-item>
-            <s-list-item>
-              <s-text tone="subdued">スケジュール設定</s-text>
-            </s-list-item>
-          </s-unordered-list>
+            </s-stack>
+          </s-box>
+          <s-stack direction="block" gap="tight">
+            <s-text fontWeight="bold">プラン一覧</s-text>
+            <s-text tone="subdued">Free: 30件/月 ($0)</s-text>
+            <s-text tone="subdued">Standard: 100件/月 ($9)</s-text>
+            <s-text tone="subdued">Pro: 500件/月 ($29)</s-text>
+            <s-text tone="subdued">Max: 無制限 ($79)</s-text>
+          </s-stack>
         </s-stack>
       </s-section>
 

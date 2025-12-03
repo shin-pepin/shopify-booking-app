@@ -28,6 +28,14 @@ api_version = "2026-01"
   topics = [ "locations/update" ]
   uri = "/webhooks/app/locations_update"
 
+  # NOTE: orders/create webhookは保護された顧客データ（PII）を含むため、
+  # Shopifyパートナーダッシュボードで「Protected customer data access」を
+  # 申請・承認後に有効化してください。
+  # 開発中は管理画面から手動で予約確定を行います。
+  # [[webhooks.subscriptions]]
+  # topics = [ "orders/create" ]
+  # uri = "/webhooks/app/orders_create"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 # write_products: 商品管理

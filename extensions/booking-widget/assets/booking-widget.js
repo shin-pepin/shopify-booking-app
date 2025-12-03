@@ -1,9 +1,8 @@
 /**
- * Booking Widget - 予約カレンダー (軽量版)
+ * Booking Widget - 予約カレンダー
  */
 (function(){
   'use strict';
-  
   class BookingWidget {
     constructor(el) {
       this.el = el;
@@ -14,11 +13,9 @@
         locId: '', locName: '', resId: '', resName: '',
         date: null, slot: null, month: new Date()
       };
-      this.$ = (s) => el.querySelector(s);
-      this.$$ = (s) => el.querySelectorAll(s);
+      this.$ = s => el.querySelector(s);
       this.init();
     }
-
     async init() {
       this.show('[data-loading]', true);
       try {
@@ -28,9 +25,8 @@
         this.show('[data-content]', true);
       } catch (e) { this.error(e.message); }
     }
-
     bind() {
-      this.$('[data-location-select]')?.addEventListener('change', (e) => {
+      this.$('[data-location-select]')?.addEventListener('change', e => {
         const loc = this.state.locations.find(l => l.id === e.target.value);
         this.state.locId = e.target.value;
         this.state.locName = loc?.name || '';
@@ -40,7 +36,6 @@
       this.$('[data-next-month]')?.addEventListener('click', () => this.navMonth(1));
       this.$('[data-reset]')?.addEventListener('click', () => this.reset());
     }
-
     async fetchLocations() {
       const r = await fetch(`${this.proxy}/locations`);
       const d = await r.json();
@@ -48,7 +43,6 @@
       this.state.locations = d.locations;
       this.renderLocs();
     }
-
     async fetchResources() {
       const r = await fetch(`${this.proxy}/resources?locationId=${this.state.locId}`);
       const d = await r.json();
@@ -56,7 +50,6 @@
       this.state.resources = d.resources;
       this.renderRes();
     }
-
     async fetchSlots(date) {
       const ds = this.fmtDate(date);
       const r = await fetch(`${this.proxy}/availability?date=${ds}&locationId=${this.state.locId}&resourceId=${this.state.resId}&interval=${this.interval}`);
@@ -65,7 +58,6 @@
       this.state.slots = d.slots;
       this.renderSlots();
     }
-
     async onLocSelect() {
       if (!this.state.locId) { this.hideAll(); return; }
       this.show('[data-loading]', true);
@@ -75,7 +67,6 @@
         this.show('[data-loading]', false);
       } catch (e) { this.error(e.message); }
     }
-
     onResSelect(res) {
       this.state.resId = res.id;
       this.state.resName = res.name;
@@ -83,7 +74,6 @@
       this.show('[data-section="calendar"]', true);
       this.renderCal();
     }
-
     async onDateSelect(date) {
       this.state.date = date;
       this.$('[data-selected-date-display]').textContent = this.fmtDispDate(date);
@@ -95,7 +85,6 @@
         this.show('[data-loading]', false);
       } catch (e) { this.error(e.message); }
     }
-
     onSlotSelect(slot) {
       this.state.slot = slot;
       this.$('[data-booking-start]').value = slot.startTimeUTC;
@@ -113,17 +102,16 @@
       this.renderSlots();
       this.el.dispatchEvent(new CustomEvent('booking:selected', { bubbles: true, detail: { ...slot, locId: this.state.locId, resId: this.state.resId } }));
     }
-
     renderLocs() {
       const sel = this.$('[data-location-select]');
       sel.innerHTML = '<option value="">店舗を選択</option>';
       this.state.locations.forEach(l => {
         const o = document.createElement('option');
-        o.value = l.id; o.textContent = l.name + (l.city ? ` (${l.city})` : '');
+        o.value = l.id;
+        o.textContent = l.name + (l.city ? ` (${l.city})` : '');
         sel.appendChild(o);
       });
     }
-
     renderRes() {
       const list = this.$('[data-resource-list]');
       list.innerHTML = '';
@@ -137,7 +125,6 @@
         list.appendChild(btn);
       });
     }
-
     renderCal() {
       const c = this.$('[data-calendar-days]');
       const m = this.state.month;
@@ -158,15 +145,14 @@
         c.appendChild(el);
       }
     }
-
-    dayEl(d, disabled, sel, today) {
+    dayEl(d, dis, sel, tod) {
       const el = document.createElement('button');
       el.type = 'button';
-      el.className = 'bw-day' + (disabled ? ' bw-day--dis' : '') + (sel ? ' bw-day--sel' : '') + (today ? ' bw-day--today' : '');
-      el.textContent = d; el.disabled = disabled;
+      el.className = 'bw-day' + (dis ? ' bw-day--dis' : '') + (sel ? ' bw-day--sel' : '') + (tod ? ' bw-day--today' : '');
+      el.textContent = d;
+      el.disabled = dis;
       return el;
     }
-
     renderSlots() {
       const c = this.$('[data-slot-list]');
       c.innerHTML = '';
@@ -180,7 +166,6 @@
         c.appendChild(btn);
       });
     }
-
     navMonth(d) { this.state.month = new Date(this.state.month.getFullYear(), this.state.month.getMonth() + d, 1); this.renderCal(); }
     reset() { this.state.date = null; this.state.slot = null; this.state.slots = []; this.show('[data-section="slots"]', false); this.show('[data-summary]', false); this.renderCal(); }
     hideAll() { ['resource','calendar','slots'].forEach(s => this.show(`[data-section="${s}"]`, false)); this.show('[data-summary]', false); }
@@ -190,7 +175,6 @@
     fmtDispDate(d) { const w = ['日','月','火','水','木','金','土']; return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日(${w[d.getDay()]})`; }
     esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
   }
-
   function init() { document.querySelectorAll('.booking-widget:not([data-init])').forEach(el => { el.dataset.init = '1'; new BookingWidget(el); }); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
   document.addEventListener('shopify:section:load', init);

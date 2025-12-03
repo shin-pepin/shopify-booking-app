@@ -14,6 +14,7 @@
 
 import db from "../db.server";
 import type { BookingStatus } from "@prisma/client";
+import { checkQuota } from "./quota.server";
 
 // === Types ===
 
@@ -35,6 +36,8 @@ export interface AvailableSlot {
  * 空き枠取得のパラメータ
  */
 export interface GetAvailableSlotsParams {
+  /** ショップID（クォータチェック用） */
+  shopId?: string;
   /** ロケーションID */
   locationId: string;
   /** リソースID */
@@ -49,6 +52,8 @@ export interface GetAvailableSlotsParams {
   slotInterval?: number;
   /** タイムゾーン - デフォルト Asia/Tokyo */
   timezone?: string;
+  /** クォータチェックをスキップするか */
+  skipQuotaCheck?: boolean;
 }
 
 /**
@@ -61,6 +66,8 @@ export interface GetAvailableSlotsResult {
   slots: AvailableSlot[];
   /** エラーメッセージ（エラー時のみ） */
   error?: string;
+  /** クォータ制限に達しているか */
+  quotaLimitReached?: boolean;
   /** デバッグ情報 */
   debug?: {
     scheduleFound: boolean;
@@ -199,8 +206,10 @@ export async function getAvailableSlots(
   params: GetAvailableSlotsParams
 ): Promise<GetAvailableSlotsResult> {
   const {
+    shopId,
     locationId,
     resourceId,
+    skipQuotaCheck = false,
     date,
     durationMinutes,
     bufferMinutes = 0,
@@ -216,6 +225,19 @@ export async function getAvailableSlots(
         slots: [],
         error: "必須パラメータが不足しています",
       };
+    }
+
+    // 1.5. クォータチェック（使用制限の確認）
+    if (shopId && !skipQuotaCheck) {
+      const quotaCheck = await checkQuota(shopId);
+      if (!quotaCheck.allowed) {
+        return {
+          success: false,
+          slots: [],
+          error: quotaCheck.error,
+          quotaLimitReached: true,
+        };
+      }
     }
 
     // 日付をDate型に正規化
