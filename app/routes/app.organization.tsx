@@ -3,7 +3,7 @@ import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
 } from "react-router";
-import { useLoaderData, useFetcher, redirect } from "react-router";
+import { useLoaderData, useFetcher } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
@@ -54,7 +54,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
 
-  // プランチェック
   const shopData = await db.shop.findUnique({
     where: { id: shop },
     select: { planType: true },
@@ -73,17 +72,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     };
   }
 
-  // 組織情報を取得
   const organization = await getShopOrganization(shop);
 
   let stats = null;
   let recentBookings: BookingData[] = [];
 
   if (organization) {
-    // 統計情報を取得
     stats = await getOrganizationStats(organization.id);
 
-    // 最近の予約を取得
     const bookings = await getOrganizationBookings(organization.id, {
       limit: 20,
     });
@@ -116,7 +112,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
 
-  // プランチェック
   if (!(await isMaxPlan(shop))) {
     return { success: false, error: "組織機能はMaxプランで利用可能です" };
   }
@@ -213,24 +208,13 @@ export default function OrganizationPage() {
   // Maxプラン以外
   if (!canUse) {
     return (
-      <s-page
-        heading="多店舗管理"
-        backAction={{
-          url: "/app",
-          accessibilityLabel: "ダッシュボードに戻る",
-        }}
-      >
+      <s-page heading="多店舗管理">
         <s-section>
-          <s-box
-            padding="loose"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
+          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>Maxプラン専用機能</s-heading>
               <s-paragraph>
-                多店舗管理機能はMaxプラン（$79/月）でご利用いただけます。
+                多店舗管理機能はMaxプラン（$120/月）でご利用いただけます。
               </s-paragraph>
               <s-paragraph>
                 複数の店舗を1つの組織として管理し、スタッフ権限やクロス店舗分析が可能になります。
@@ -251,21 +235,10 @@ export default function OrganizationPage() {
   // 組織未作成
   if (!organization) {
     return (
-      <s-page
-        heading="多店舗管理"
-        backAction={{
-          url: "/app",
-          accessibilityLabel: "ダッシュボードに戻る",
-        }}
-      >
+      <s-page heading="多店舗管理">
         <s-section heading="組織を作成">
           {!showCreateForm ? (
-            <s-box
-              padding="loose"
-              borderWidth="base"
-              borderRadius="base"
-              background="subdued"
-            >
+            <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
               <s-stack direction="block" gap="base">
                 <s-heading>組織を作成して多店舗管理を開始</s-heading>
                 <s-paragraph>
@@ -276,48 +249,34 @@ export default function OrganizationPage() {
                   <s-list-item>スタッフごとのアクセス権限管理</s-list-item>
                   <s-list-item>クロス店舗の売上分析</s-list-item>
                 </s-unordered-list>
-                <s-button
-                  variant="primary"
-                  onClick={() => setShowCreateForm(true)}
-                >
+                <s-button variant="primary" onClick={() => setShowCreateForm(true)}>
                   組織を作成する
                 </s-button>
               </s-stack>
             </s-box>
           ) : (
-            <s-box
-              padding="base"
-              borderWidth="base"
-              borderRadius="base"
-              background="subdued"
-            >
+            <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
               <s-stack direction="block" gap="base">
                 <s-text-field
                   label="組織名"
                   value={formData.name}
-                  onChange={(e: any) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  onChange={(e: any) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="例: 株式会社ABC美容室"
                 />
                 <s-text-field
                   label="オーナーメールアドレス"
                   type="email"
                   value={formData.ownerEmail}
-                  onChange={(e: any) =>
-                    setFormData({ ...formData, ownerEmail: e.target.value })
-                  }
+                  onChange={(e: any) => setFormData({ ...formData, ownerEmail: e.target.value })}
                   placeholder="owner@example.com"
                 />
                 <s-text-field
                   label="オーナー名（任意）"
                   value={formData.ownerName}
-                  onChange={(e: any) =>
-                    setFormData({ ...formData, ownerName: e.target.value })
-                  }
+                  onChange={(e: any) => setFormData({ ...formData, ownerName: e.target.value })}
                   placeholder="山田 太郎"
                 />
-                <s-stack direction="inline" gap="tight">
+                <s-stack direction="inline" gap="base">
                   <s-button
                     variant="primary"
                     onClick={handleCreate}
@@ -325,10 +284,7 @@ export default function OrganizationPage() {
                   >
                     作成する
                   </s-button>
-                  <s-button
-                    variant="plain"
-                    onClick={() => setShowCreateForm(false)}
-                  >
+                  <s-button variant="tertiary" onClick={() => setShowCreateForm(false)}>
                     キャンセル
                   </s-button>
                 </s-stack>
@@ -342,13 +298,7 @@ export default function OrganizationPage() {
 
   // 組織ダッシュボード
   return (
-    <s-page
-      heading={organization.name}
-      backAction={{
-        url: "/app",
-        accessibilityLabel: "ダッシュボードに戻る",
-      }}
-    >
+    <s-page heading={organization.name}>
       <s-button slot="primary-action" url="/app/organization/staff">
         スタッフ管理
       </s-button>
@@ -356,51 +306,27 @@ export default function OrganizationPage() {
       {/* 統計サマリー */}
       <s-section heading="概要">
         <s-stack direction="inline" gap="base">
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-            style={{ flex: 1 }}
-          >
-            <s-stack direction="block" gap="tight">
-              <s-text tone="subdued">店舗数</s-text>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text>店舗数</s-text>
               <s-heading>{stats?.totalShops || 0}</s-heading>
             </s-stack>
           </s-box>
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-            style={{ flex: 1 }}
-          >
-            <s-stack direction="block" gap="tight">
-              <s-text tone="subdued">スタッフ数</s-text>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text>スタッフ数</s-text>
               <s-heading>{stats?.totalStaff || 0}</s-heading>
             </s-stack>
           </s-box>
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-            style={{ flex: 1 }}
-          >
-            <s-stack direction="block" gap="tight">
-              <s-text tone="subdued">今日の予約</s-text>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text>今日の予約</s-text>
               <s-heading>{stats?.todayBookings || 0}</s-heading>
             </s-stack>
           </s-box>
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-            style={{ flex: 1 }}
-          >
-            <s-stack direction="block" gap="tight">
-              <s-text tone="subdued">今月の予約</s-text>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text>今月の予約</s-text>
               <s-heading>{stats?.totalMonthUsage || 0}</s-heading>
             </s-stack>
           </s-box>
@@ -411,26 +337,20 @@ export default function OrganizationPage() {
       <s-section heading="店舗別実績">
         <s-stack direction="block" gap="base">
           {stats?.shopStats.map((shop) => (
-            <s-box
-              key={shop.id}
-              padding="base"
-              borderWidth="base"
-              borderRadius="base"
-              background="subdued"
-            >
-              <s-stack direction="inline" gap="base" wrap={false}>
-                <s-stack direction="block" gap="tight" style={{ flex: 1 }}>
+            <s-box key={shop.id} padding="base" borderWidth="base" borderRadius="base" background="subdued">
+              <s-stack direction="inline" gap="base">
+                <s-stack direction="block" gap="base">
                   <s-heading>{shop.name}</s-heading>
-                  <s-text tone="subdued">{shop.id}</s-text>
+                  <s-text>{shop.id}</s-text>
                 </s-stack>
                 <s-stack direction="inline" gap="loose">
-                  <s-stack direction="block" gap="tight">
-                    <s-text tone="subdued">今日</s-text>
-                    <s-text fontWeight="bold">{shop.todayBookings}件</s-text>
+                  <s-stack direction="block" gap="base">
+                    <s-text>今日</s-text>
+                    <s-text><strong>{shop.todayBookings}件</strong></s-text>
                   </s-stack>
-                  <s-stack direction="block" gap="tight">
-                    <s-text tone="subdued">今月</s-text>
-                    <s-text fontWeight="bold">{shop.monthUsage}件</s-text>
+                  <s-stack direction="block" gap="base">
+                    <s-text>今月</s-text>
+                    <s-text><strong>{shop.monthUsage}件</strong></s-text>
                   </s-stack>
                 </s-stack>
               </s-stack>
@@ -442,39 +362,26 @@ export default function OrganizationPage() {
       {/* 全店舗予約一覧 */}
       <s-section heading="全店舗予約一覧（最新20件）">
         {recentBookings.length === 0 ? (
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
-            <s-text tone="subdued">予約がありません</s-text>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-text>予約がありません</s-text>
           </s-box>
         ) : (
-          <s-stack direction="block" gap="tight">
+          <s-stack direction="block" gap="base">
             {recentBookings.map((booking) => (
-              <s-box
-                key={booking.id}
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <s-stack direction="inline" gap="base" wrap={false}>
-                  <s-stack direction="block" gap="tight" style={{ flex: 1 }}>
-                    <s-stack direction="inline" gap="tight">
-                      <s-text fontWeight="bold">
-                        {formatDateTime(booking.startAt)}
-                      </s-text>
+              <s-box key={booking.id} padding="base" borderWidth="base" borderRadius="base" background="subdued">
+                <s-stack direction="inline" gap="base">
+                  <s-stack direction="block" gap="base">
+                    <s-stack direction="inline" gap="base">
+                      <s-text><strong>{formatDateTime(booking.startAt)}</strong></s-text>
                       {getStatusBadge(booking.status)}
                       <s-badge tone="info">{booking.shop.name || booking.shop.id}</s-badge>
                     </s-stack>
-                    <s-text tone="subdued">
+                    <s-text>
                       {booking.location.name} / {booking.resource.name}
                       {booking.service && ` / ${booking.service.name}`}
                     </s-text>
                     {booking.customerName && (
-                      <s-text tone="subdued">顧客: {booking.customerName}</s-text>
+                      <s-text>顧客: {booking.customerName}</s-text>
                     )}
                   </s-stack>
                 </s-stack>
@@ -487,33 +394,29 @@ export default function OrganizationPage() {
       {/* サイドバー */}
       <s-section slot="aside" heading="組織情報">
         <s-stack direction="block" gap="base">
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">オーナー</s-text>
-            <s-text tone="subdued">{organization.ownerEmail}</s-text>
-            {organization.ownerName && (
-              <s-text tone="subdued">{organization.ownerName}</s-text>
-            )}
+          <s-stack direction="block" gap="base">
+            <s-text><strong>オーナー</strong></s-text>
+            <s-text>{organization.ownerEmail}</s-text>
+            {organization.ownerName && <s-text>{organization.ownerName}</s-text>}
           </s-stack>
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">所属店舗</s-text>
+          <s-stack direction="block" gap="base">
+            <s-text><strong>所属店舗</strong></s-text>
             {organization.shops.map((shop) => (
-              <s-text key={shop.id} tone="subdued">
-                {shop.name || shop.id}
-              </s-text>
+              <s-text key={shop.id}>{shop.name || shop.id}</s-text>
             ))}
           </s-stack>
         </s-stack>
       </s-section>
 
       <s-section slot="aside" heading="クイックリンク">
-        <s-stack direction="block" gap="tight">
-          <s-button variant="plain" url="/app/organization/staff">
+        <s-stack direction="block" gap="base">
+          <s-button variant="tertiary" url="/app/organization/staff">
             スタッフ管理
           </s-button>
-          <s-button variant="plain" url="/app/organization/shops">
+          <s-button variant="tertiary" url="/app/organization/shops">
             店舗管理
           </s-button>
-          <s-button variant="plain" url="/app/organization/settings">
+          <s-button variant="tertiary" url="/app/organization/settings">
             組織設定
           </s-button>
         </s-stack>
@@ -521,4 +424,3 @@ export default function OrganizationPage() {
     </s-page>
   );
 }
-

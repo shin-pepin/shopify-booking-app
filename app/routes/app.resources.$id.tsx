@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type {
   ActionFunctionArgs,
   HeadersFunction,
@@ -53,9 +53,7 @@ const DAYS_OF_WEEK = [
 
 // 時間オプションの生成（30分刻み）
 const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
-  const hours = Math.floor(i / 2)
-    .toString()
-    .padStart(2, "0");
+  const hours = Math.floor(i / 2).toString().padStart(2, "0");
   const minutes = i % 2 === 0 ? "00" : "30";
   return `${hours}:${minutes}`;
 });
@@ -164,16 +162,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           isAvailable: boolean;
         }>;
 
-        // 既存のスケジュールを削除して新規作成
         await db.schedule.deleteMany({
           where: {
             resourceId,
             locationId,
-            specificDate: null, // 通常のスケジュールのみ
+            specificDate: null,
           },
         });
 
-        // 新しいスケジュールを作成
         const newSchedules = schedules
           .filter((s) => s.isAvailable)
           .map((s) => ({
@@ -192,44 +188,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         }
 
         return { success: true, action: "scheduleSaved" };
-      }
-
-      case "addSchedule": {
-        const locationId = formData.get("locationId") as string;
-        const dayOfWeek = parseInt(formData.get("dayOfWeek") as string, 10);
-        const startTime = formData.get("startTime") as string;
-        const endTime = formData.get("endTime") as string;
-
-        if (!locationId || isNaN(dayOfWeek) || !startTime || !endTime) {
-          return { success: false, error: "パラメータが不足しています" };
-        }
-
-        await db.schedule.create({
-          data: {
-            resourceId,
-            locationId,
-            dayOfWeek,
-            startTime,
-            endTime,
-            isAvailable: true,
-          },
-        });
-
-        return { success: true, action: "scheduleAdded" };
-      }
-
-      case "deleteSchedule": {
-        const scheduleId = formData.get("scheduleId") as string;
-
-        if (!scheduleId) {
-          return { success: false, error: "スケジュールIDが必要です" };
-        }
-
-        await db.schedule.delete({
-          where: { id: scheduleId },
-        });
-
-        return { success: true, action: "scheduleDeleted" };
       }
 
       default:
@@ -257,33 +215,21 @@ export default function ResourceDetailPage() {
     locations[0]?.id || ""
   );
   const [editingSchedules, setEditingSchedules] = useState<
-    Map<
-      number,
-      { startTime: string; endTime: string; isAvailable: boolean }
-    >
+    Map<number, { startTime: string; endTime: string; isAvailable: boolean }>
   >(new Map());
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newSchedule, setNewSchedule] = useState({
-    dayOfWeek: 1,
-    startTime: "09:00",
-    endTime: "18:00",
-  });
 
   const isLoading = fetcher.state !== "idle";
 
-  // 選択中のロケーションのスケジュールを取得
   const currentSchedules = resource.schedules.filter(
     (s) => s.locationId === selectedLocationId && !s.specificDate
   );
 
-  // 初期化: 編集用スケジュールマップを作成
   useEffect(() => {
     const scheduleMap = new Map<
       number,
       { startTime: string; endTime: string; isAvailable: boolean }
     >();
 
-    // 全曜日を初期化（デフォルトは休み）
     DAYS_OF_WEEK.forEach((day) => {
       scheduleMap.set(day.value, {
         startTime: "09:00",
@@ -292,7 +238,6 @@ export default function ResourceDetailPage() {
       });
     });
 
-    // 既存のスケジュールで上書き
     currentSchedules.forEach((s) => {
       scheduleMap.set(s.dayOfWeek, {
         startTime: s.startTime,
@@ -312,13 +257,6 @@ export default function ResourceDetailPage() {
           break;
         case "scheduleSaved":
           shopify.toast.show("スケジュールを保存しました");
-          break;
-        case "scheduleAdded":
-          shopify.toast.show("スケジュールを追加しました");
-          setShowAddModal(false);
-          break;
-        case "scheduleDeleted":
-          shopify.toast.show("スケジュールを削除しました");
           break;
       }
     } else if (fetcher.data?.error) {
@@ -379,10 +317,7 @@ export default function ResourceDetailPage() {
   };
 
   return (
-    <s-page
-      heading={resource.name}
-      backAction={{ url: "/app/resources" }}
-    >
+    <s-page heading={resource.name}>
       <s-button
         slot="primary-action"
         onClick={handleSaveSchedule}
@@ -418,12 +353,7 @@ export default function ResourceDetailPage() {
       {/* スケジュール設定セクション */}
       <s-section heading="シフト設定">
         {locations.length === 0 ? (
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-text tone="caution">
               ⚠️ ロケーションが未登録です。
               <s-link href="/app">ホーム</s-link>からロケーションを同期してください。
@@ -431,13 +361,10 @@ export default function ResourceDetailPage() {
           </s-box>
         ) : (
           <s-stack direction="block" gap="base">
-            {/* ロケーション選択 */}
             <s-select
               label="ロケーション（店舗）を選択"
               value={selectedLocationId}
-              onChange={(e: CustomEvent) =>
-                setSelectedLocationId(e.detail as string)
-              }
+              onChange={(e: CustomEvent) => setSelectedLocationId(e.detail as string)}
               options={locations.map((loc) => ({
                 label: loc.name,
                 value: loc.id,
@@ -445,13 +372,12 @@ export default function ResourceDetailPage() {
             />
 
             <s-paragraph>
-              <s-text tone="subdued">
+              <s-text>
                 曜日ごとに営業時間を設定します。チェックを外すと休業日になります。
               </s-text>
             </s-paragraph>
 
-            {/* 曜日ごとのスケジュール */}
-            <s-stack direction="block" gap="tight">
+            <s-stack direction="block" gap="base">
               {DAYS_OF_WEEK.map((day) => {
                 const schedule = editingSchedules.get(day.value) || {
                   startTime: "09:00",
@@ -465,41 +391,25 @@ export default function ResourceDetailPage() {
                     padding="base"
                     borderWidth="base"
                     borderRadius="base"
-                    background={schedule.isAvailable ? "subdued" : "subdued"}
-                    style={{
-                      opacity: schedule.isAvailable ? 1 : 0.6,
-                    }}
+                    background="subdued"
                   >
-                    <s-stack direction="inline" gap="base" wrap={false}>
+                    <s-stack direction="inline" gap="base">
                       <s-checkbox
                         checked={schedule.isAvailable}
                         onChange={(e: CustomEvent) =>
-                          updateSchedule(
-                            day.value,
-                            "isAvailable",
-                            e.detail as boolean
-                          )
+                          updateSchedule(day.value, "isAvailable", e.detail as boolean)
                         }
                       >
-                        <s-text
-                          fontWeight={schedule.isAvailable ? "bold" : "regular"}
-                          style={{ minWidth: "60px" }}
-                        >
-                          {day.label}
-                        </s-text>
+                        <s-text>{schedule.isAvailable ? <strong>{day.label}</strong> : day.label}</s-text>
                       </s-checkbox>
 
                       {schedule.isAvailable && (
-                        <s-stack direction="inline" gap="tight">
+                        <s-stack direction="inline" gap="base">
                           <s-select
                             label=""
                             value={schedule.startTime}
                             onChange={(e: CustomEvent) =>
-                              updateSchedule(
-                                day.value,
-                                "startTime",
-                                e.detail as string
-                              )
+                              updateSchedule(day.value, "startTime", e.detail as string)
                             }
                             options={TIME_OPTIONS.map((t) => ({
                               label: t,
@@ -511,11 +421,7 @@ export default function ResourceDetailPage() {
                             label=""
                             value={schedule.endTime}
                             onChange={(e: CustomEvent) =>
-                              updateSchedule(
-                                day.value,
-                                "endTime",
-                                e.detail as string
-                              )
+                              updateSchedule(day.value, "endTime", e.detail as string)
                             }
                             options={TIME_OPTIONS.map((t) => ({
                               label: t,
@@ -525,9 +431,7 @@ export default function ResourceDetailPage() {
                         </s-stack>
                       )}
 
-                      {!schedule.isAvailable && (
-                        <s-text tone="subdued">休業日</s-text>
-                      )}
+                      {!schedule.isAvailable && <s-text>休業日</s-text>}
                     </s-stack>
                   </s-box>
                 );
@@ -541,23 +445,21 @@ export default function ResourceDetailPage() {
       <s-section slot="aside" heading="シフト設定のヒント">
         <s-stack direction="block" gap="base">
           <s-paragraph>
-            <s-text tone="subdued">
+            <s-text>
               スタッフは複数の店舗で働くことができます。
               ロケーションを切り替えて、各店舗でのシフトを設定してください。
             </s-text>
           </s-paragraph>
           <s-paragraph>
-            <s-text tone="subdued">
-              例: 月・水は渋谷店、火・木は原宿店で勤務
-            </s-text>
+            <s-text>例: 月・水は渋谷店、火・木は原宿店で勤務</s-text>
           </s-paragraph>
         </s-stack>
       </s-section>
 
       <s-section slot="aside" heading="現在のスケジュール">
-        <s-stack direction="block" gap="tight">
+        <s-stack direction="block" gap="base">
           {currentSchedules.length === 0 ? (
-            <s-text tone="subdued">スケジュール未設定</s-text>
+            <s-text>スケジュール未設定</s-text>
           ) : (
             currentSchedules.map((s) => (
               <s-text key={s.id}>
@@ -575,4 +477,3 @@ export default function ResourceDetailPage() {
 export const headers: HeadersFunction = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
-

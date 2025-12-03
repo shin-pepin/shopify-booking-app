@@ -25,37 +25,42 @@ interface LoaderData {
     name: string;
     amount: number;
     usageLimit: number;
-    features: string[];
+    features: readonly string[];
+    lineEnabled: boolean;
+    multiShopEnabled: boolean;
     isCurrent: boolean;
   }>;
 }
 
 // === Loader ===
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session, billing } = await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
   const shop = session.shop;
 
   // 使用量情報を取得
   const usageInfo = await getShopUsageInfo(shop);
 
-  // 現在のプラン情報を取得
+  // 現在のプラン情報を取得（planTypeはマイグレーション後に追加されるフィールド）
   const shopData = await db.shop.findUnique({
     where: { id: shop },
-    select: { planType: true },
-  });
+  }) as { planType?: string } | null;
+
+  const currentPlanType = shopData?.planType || "FREE";
 
   const plans = Object.entries(BILLING_PLANS).map(([key, plan]) => ({
     key,
     name: plan.name,
     amount: plan.amount,
     usageLimit: plan.usageLimit,
-    features: plan.features as string[],
-    isCurrent: shopData?.planType === key,
+    features: [...plan.features],
+    lineEnabled: plan.lineEnabled,
+    multiShopEnabled: plan.multiShopEnabled,
+    isCurrent: currentPlanType === key,
   }));
 
   return {
     shop,
-    currentPlan: shopData?.planType || "FREE",
+    currentPlan: currentPlanType,
     usage: {
       currentUsage: usageInfo.currentUsage,
       usageLimit: usageInfo.usageLimit,
@@ -88,11 +93,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // 有料プランの場合はShopify Billingを使用
   try {
-    // 課金リクエストを作成
-    const billingResponse = await billing.request({
-      plan: plan.name,
-      isTest: true, // 開発中はテストモード
-    });
+    // 課金リクエストを作成（Billing APIの型はshopify.server.tsの設定に依存）
+    const billingParams = { plan: plan.name, isTest: true };
+    const billingResponse = await (billing.request as Function)(billingParams) as { confirmationUrl: string };
 
     // 確認URLにリダイレクト
     return redirect(billingResponse.confirmationUrl);
@@ -122,7 +125,7 @@ export default function BillingPage() {
     fetcher.submit({ planKey }, { method: "POST" });
   };
 
-  const getPlanBadgeTone = (planKey: string) => {
+  const getPlanBadgeTone = (planKey: string): "info" | "success" | "warning" | "critical" => {
     switch (planKey) {
       case "FREE":
         return "info";
@@ -131,28 +134,17 @@ export default function BillingPage() {
       case "PRO":
         return "warning";
       case "MAX":
-        return "attention";
+        return "critical";
       default:
         return "info";
     }
   };
 
   return (
-    <s-page
-      heading="料金プラン"
-      backAction={{
-        url: "/app",
-        accessibilityLabel: "ダッシュボードに戻る",
-      }}
-    >
+    <s-page heading="料金プラン">
       {/* 現在の使用状況 */}
       <s-section heading="現在の使用状況">
-        <s-box
-          padding="base"
-          borderWidth="base"
-          borderRadius="base"
-          background="subdued"
-        >
+        <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
           <s-stack direction="block" gap="base">
             <s-stack direction="inline" gap="base">
               <s-heading>
@@ -198,15 +190,11 @@ export default function BillingPage() {
               padding="base"
               borderWidth="base"
               borderRadius="base"
-              background={plan.isCurrent ? "subdued" : "subdued"}
-              style={{
-                borderColor: plan.isCurrent ? "#6366F1" : undefined,
-                borderWidth: plan.isCurrent ? "2px" : undefined,
-              }}
+              background="subdued"
             >
-              <s-stack direction="inline" gap="base" wrap={false}>
-                <s-stack direction="block" gap="tight" style={{ flex: 1 }}>
-                  <s-stack direction="inline" gap="tight">
+              <s-stack direction="inline" gap="base">
+                <s-stack direction="block" gap="base">
+                  <s-stack direction="inline" gap="base">
                     <s-heading>{plan.name}</s-heading>
                     <s-badge tone={getPlanBadgeTone(plan.key)}>
                       {plan.usageLimit === Infinity ? "無制限" : `${plan.usageLimit}件/月`}
@@ -215,20 +203,30 @@ export default function BillingPage() {
                       <s-badge tone="success">現在のプラン</s-badge>
                     )}
                   </s-stack>
-                  <s-text fontWeight="bold">
-                    {plan.amount === 0 ? "無料" : `$${plan.amount}/月`}
+                  <s-text>
+                    <strong>{plan.amount === 0 ? "無料" : `$${plan.amount}/月`}</strong>
                   </s-text>
-                  <s-stack direction="block" gap="tight">
+                  
+                  {/* 機能アイコン */}
+                  <s-stack direction="inline" gap="base">
+                    <s-badge tone="info">手付金 ✓</s-badge>
+                    <s-badge tone={plan.lineEnabled ? "success" : "warning"}>
+                      LINE {plan.lineEnabled ? "✓" : "×"}
+                    </s-badge>
+                    <s-badge tone={plan.multiShopEnabled ? "success" : "warning"}>
+                      複数店舗 {plan.multiShopEnabled ? "✓" : "×"}
+                    </s-badge>
+                  </s-stack>
+                  
+                  <s-stack direction="block" gap="base">
                     {plan.features.map((feature, idx) => (
-                      <s-text key={idx} tone="subdued">
-                        ✓ {feature}
-                      </s-text>
+                      <s-text key={idx}>✓ {feature}</s-text>
                     ))}
                   </s-stack>
                 </s-stack>
                 {!plan.isCurrent && (
                   <s-button
-                    variant={plan.amount > 0 ? "primary" : "plain"}
+                    variant={plan.amount > 0 ? "primary" : "tertiary"}
                     onClick={() => handleSelectPlan(plan.key)}
                     {...(isSubmitting ? { loading: true, disabled: true } : {})}
                   >
@@ -244,27 +242,24 @@ export default function BillingPage() {
       {/* FAQ */}
       <s-section slot="aside" heading="よくある質問">
         <s-stack direction="block" gap="base">
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">プラン変更はいつ反映されますか？</s-text>
-            <s-text tone="subdued">
+          <s-stack direction="block" gap="base">
+            <s-text><strong>プラン変更はいつ反映されますか？</strong></s-text>
+            <s-text>
               アップグレードは即座に反映されます。ダウングレードは次の請求サイクルから適用されます。
             </s-text>
           </s-stack>
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">上限を超えた場合はどうなりますか？</s-text>
-            <s-text tone="subdued">
+          <s-stack direction="block" gap="base">
+            <s-text><strong>上限を超えた場合はどうなりますか？</strong></s-text>
+            <s-text>
               新しい予約の受付が停止されます。既存の予約には影響ありません。
             </s-text>
           </s-stack>
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">使用量はいつリセットされますか？</s-text>
-            <s-text tone="subdued">
-              30日ごとにリセットされます。
-            </s-text>
+          <s-stack direction="block" gap="base">
+            <s-text><strong>使用量はいつリセットされますか？</strong></s-text>
+            <s-text>30日ごとにリセットされます。</s-text>
           </s-stack>
         </s-stack>
       </s-section>
     </s-page>
   );
 }
-

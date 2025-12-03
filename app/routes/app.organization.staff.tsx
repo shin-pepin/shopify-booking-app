@@ -15,7 +15,6 @@ import {
   updateStaffMember,
   removeStaffMember,
   parseAllowedShopIds,
-  serializeAllowedShopIds,
 } from "../services/organization.server";
 import type { StaffRole } from "@prisma/client";
 
@@ -51,7 +50,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
 
-  // プランチェック
   const canUse = await isMaxPlan(shop);
 
   if (!canUse) {
@@ -65,7 +63,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     };
   }
 
-  // 組織情報を取得
   const organization = await getShopOrganization(shop);
 
   if (!organization) {
@@ -79,7 +76,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     };
   }
 
-  // スタッフ一覧を取得
   const staffMembers = await getOrganizationStaff(organization.id);
 
   return {
@@ -107,7 +103,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   const shop = session.shop;
 
-  // プランチェック
   if (!(await isMaxPlan(shop))) {
     return { success: false, error: "Maxプランで利用可能です" };
   }
@@ -254,16 +249,13 @@ export default function OrganizationStaffPage() {
   const handleRemove = (staffId: string) => {
     if (!confirm("このスタッフを削除しますか？")) return;
 
-    fetcher.submit(
-      { action: "remove", staffId },
-      { method: "POST" }
-    );
+    fetcher.submit({ action: "remove", staffId }, { method: "POST" });
   };
 
   const getRoleBadge = (role: StaffRole) => {
     switch (role) {
       case "OWNER":
-        return <s-badge tone="attention">オーナー</s-badge>;
+        return <s-badge tone="warning">オーナー</s-badge>;
       case "MANAGER":
         return <s-badge tone="success">マネージャー</s-badge>;
       case "STAFF":
@@ -275,53 +267,20 @@ export default function OrganizationStaffPage() {
     }
   };
 
-  const getRoleLabel = (role: StaffRole) => {
-    switch (role) {
-      case "OWNER":
-        return "オーナー（全権限）";
-      case "MANAGER":
-        return "マネージャー（店舗管理）";
-      case "STAFF":
-        return "スタッフ（予約管理）";
-      case "VIEWER":
-        return "閲覧者（閲覧のみ）";
-      default:
-        return role;
-    }
-  };
-
   // Maxプラン以外または組織未作成
   if (!canUse || !organizationId) {
     return (
-      <s-page
-        heading="スタッフ管理"
-        backAction={{
-          url: "/app/organization",
-          accessibilityLabel: "組織管理に戻る",
-        }}
-      >
+      <s-page heading="スタッフ管理">
         <s-section>
-          <s-box
-            padding="loose"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
+          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-heading>
-                {!canUse
-                  ? "Maxプラン専用機能"
-                  : "組織を作成してください"}
-              </s-heading>
+              <s-heading>{!canUse ? "Maxプラン専用機能" : "組織を作成してください"}</s-heading>
               <s-paragraph>
                 {!canUse
                   ? "スタッフ管理機能はMaxプランで利用可能です。"
                   : "先に組織を作成してからスタッフを招待できます。"}
               </s-paragraph>
-              <s-button
-                variant="primary"
-                url={canUse ? "/app/organization" : "/app/billing"}
-              >
+              <s-button variant="primary" url={canUse ? "/app/organization" : "/app/billing"}>
                 {canUse ? "組織を作成" : "プランをアップグレード"}
               </s-button>
             </s-stack>
@@ -332,54 +291,33 @@ export default function OrganizationStaffPage() {
   }
 
   return (
-    <s-page
-      heading="スタッフ管理"
-      backAction={{
-        url: "/app/organization",
-        accessibilityLabel: "組織管理に戻る",
-      }}
-    >
-      <s-button
-        slot="primary-action"
-        variant="primary"
-        onClick={() => setShowInviteForm(true)}
-      >
+    <s-page heading="スタッフ管理">
+      <s-button slot="primary-action" variant="primary" onClick={() => setShowInviteForm(true)}>
         スタッフを招待
       </s-button>
 
       {/* 招待フォーム */}
       {showInviteForm && (
         <s-section heading="スタッフを招待">
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-text-field
                 label="メールアドレス"
                 type="email"
                 value={inviteForm.email}
-                onChange={(e: any) =>
-                  setInviteForm({ ...inviteForm, email: e.target.value })
-                }
+                onChange={(e: any) => setInviteForm({ ...inviteForm, email: e.target.value })}
                 placeholder="staff@example.com"
               />
               <s-text-field
                 label="名前（任意）"
                 value={inviteForm.name}
-                onChange={(e: any) =>
-                  setInviteForm({ ...inviteForm, name: e.target.value })
-                }
+                onChange={(e: any) => setInviteForm({ ...inviteForm, name: e.target.value })}
                 placeholder="山田 花子"
               />
               <s-select
                 label="役割"
                 value={inviteForm.role}
-                onChange={(e: any) =>
-                  setInviteForm({ ...inviteForm, role: e.target.value })
-                }
+                onChange={(e: any) => setInviteForm({ ...inviteForm, role: e.target.value })}
               >
                 <option value="MANAGER">マネージャー（店舗管理）</option>
                 <option value="STAFF">スタッフ（予約管理）</option>
@@ -387,8 +325,8 @@ export default function OrganizationStaffPage() {
               </s-select>
 
               {inviteForm.role !== "OWNER" && (
-                <s-stack direction="block" gap="tight">
-                  <s-text fontWeight="bold">アクセス可能な店舗</s-text>
+                <s-stack direction="block" gap="base">
+                  <s-text><strong>アクセス可能な店舗</strong></s-text>
                   {shops.map((shop) => (
                     <s-checkbox
                       key={shop.id}
@@ -399,9 +337,7 @@ export default function OrganizationStaffPage() {
                           ...inviteForm,
                           allowedShopIds: checked
                             ? [...inviteForm.allowedShopIds, shop.id]
-                            : inviteForm.allowedShopIds.filter(
-                                (id) => id !== shop.id
-                              ),
+                            : inviteForm.allowedShopIds.filter((id) => id !== shop.id),
                         });
                       }}
                     >
@@ -411,7 +347,7 @@ export default function OrganizationStaffPage() {
                 </s-stack>
               )}
 
-              <s-stack direction="inline" gap="tight">
+              <s-stack direction="inline" gap="base">
                 <s-button
                   variant="primary"
                   onClick={handleInvite}
@@ -419,10 +355,7 @@ export default function OrganizationStaffPage() {
                 >
                   招待を送信
                 </s-button>
-                <s-button
-                  variant="plain"
-                  onClick={() => setShowInviteForm(false)}
-                >
+                <s-button variant="tertiary" onClick={() => setShowInviteForm(false)}>
                   キャンセル
                 </s-button>
               </s-stack>
@@ -434,37 +367,28 @@ export default function OrganizationStaffPage() {
       {/* 編集フォーム */}
       {editingStaff && (
         <s-section heading="スタッフを編集">
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-text tone="subdued">{editingStaff.email}</s-text>
+              <s-text>{editingStaff.email}</s-text>
               <s-text-field
                 label="名前"
                 value={editingStaff.name || ""}
-                onChange={(e: any) =>
-                  setEditingStaff({ ...editingStaff, name: e.target.value })
-                }
+                onChange={(e: any) => setEditingStaff({ ...editingStaff, name: e.target.value })}
               />
               {editingStaff.role !== "OWNER" && (
                 <>
                   <s-select
                     label="役割"
                     value={editingStaff.role}
-                    onChange={(e: any) =>
-                      setEditingStaff({ ...editingStaff, role: e.target.value })
-                    }
+                    onChange={(e: any) => setEditingStaff({ ...editingStaff, role: e.target.value })}
                   >
                     <option value="MANAGER">マネージャー</option>
                     <option value="STAFF">スタッフ</option>
                     <option value="VIEWER">閲覧者</option>
                   </s-select>
 
-                  <s-stack direction="block" gap="tight">
-                    <s-text fontWeight="bold">アクセス可能な店舗</s-text>
+                  <s-stack direction="block" gap="base">
+                    <s-text><strong>アクセス可能な店舗</strong></s-text>
                     {shops.map((shop) => (
                       <s-checkbox
                         key={shop.id}
@@ -475,9 +399,7 @@ export default function OrganizationStaffPage() {
                             ...editingStaff,
                             allowedShopIds: checked
                               ? [...editingStaff.allowedShopIds, shop.id]
-                              : editingStaff.allowedShopIds.filter(
-                                  (id) => id !== shop.id
-                                ),
+                              : editingStaff.allowedShopIds.filter((id) => id !== shop.id),
                           });
                         }}
                       >
@@ -489,10 +411,7 @@ export default function OrganizationStaffPage() {
                   <s-checkbox
                     checked={editingStaff.isActive}
                     onChange={(e: any) =>
-                      setEditingStaff({
-                        ...editingStaff,
-                        isActive: e.target.checked,
-                      })
+                      setEditingStaff({ ...editingStaff, isActive: e.target.checked })
                     }
                   >
                     アクティブ
@@ -500,7 +419,7 @@ export default function OrganizationStaffPage() {
                 </>
               )}
 
-              <s-stack direction="inline" gap="tight">
+              <s-stack direction="inline" gap="base">
                 <s-button
                   variant="primary"
                   onClick={handleUpdate}
@@ -508,10 +427,7 @@ export default function OrganizationStaffPage() {
                 >
                   更新
                 </s-button>
-                <s-button
-                  variant="plain"
-                  onClick={() => setEditingStaff(null)}
-                >
+                <s-button variant="tertiary" onClick={() => setEditingStaff(null)}>
                   キャンセル
                 </s-button>
               </s-stack>
@@ -523,58 +439,36 @@ export default function OrganizationStaffPage() {
       {/* スタッフ一覧 */}
       <s-section heading={`スタッフ一覧（${staff.length}名）`}>
         {staff.length === 0 ? (
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
-            <s-text tone="subdued">スタッフがいません</s-text>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-text>スタッフがいません</s-text>
           </s-box>
         ) : (
           <s-stack direction="block" gap="base">
             {staff.map((member) => (
-              <s-box
-                key={member.id}
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <s-stack direction="inline" gap="base" wrap={false}>
-                  <s-stack direction="block" gap="tight" style={{ flex: 1 }}>
-                    <s-stack direction="inline" gap="tight">
+              <s-box key={member.id} padding="base" borderWidth="base" borderRadius="base" background="subdued">
+                <s-stack direction="inline" gap="base">
+                  <s-stack direction="block" gap="base">
+                    <s-stack direction="inline" gap="base">
                       <s-heading>{member.name || member.email}</s-heading>
                       {getRoleBadge(member.role)}
-                      {!member.isActive && (
-                        <s-badge tone="critical">無効</s-badge>
-                      )}
-                      {!member.acceptedAt && (
-                        <s-badge tone="warning">招待中</s-badge>
-                      )}
+                      {!member.isActive && <s-badge tone="critical">無効</s-badge>}
+                      {!member.acceptedAt && <s-badge tone="warning">招待中</s-badge>}
                     </s-stack>
-                    <s-text tone="subdued">{member.email}</s-text>
+                    <s-text>{member.email}</s-text>
                     {member.role !== "OWNER" && member.allowedShopIds.length > 0 && (
-                      <s-text tone="subdued">
+                      <s-text>
                         アクセス: {member.allowedShopIds.map((id) => 
                           shops.find((s) => s.id === id)?.name || id
                         ).join(", ")}
                       </s-text>
                     )}
                   </s-stack>
-                  <s-stack direction="inline" gap="tight">
-                    <s-button
-                      variant="plain"
-                      onClick={() => setEditingStaff(member)}
-                    >
+                  <s-stack direction="inline" gap="base">
+                    <s-button variant="tertiary" onClick={() => setEditingStaff(member)}>
                       編集
                     </s-button>
                     {member.role !== "OWNER" && (
-                      <s-button
-                        variant="plain"
-                        tone="critical"
-                        onClick={() => handleRemove(member.id)}
-                      >
+                      <s-button variant="tertiary" tone="critical" onClick={() => handleRemove(member.id)}>
                         削除
                       </s-button>
                     )}
@@ -589,25 +483,24 @@ export default function OrganizationStaffPage() {
       {/* サイドバー */}
       <s-section slot="aside" heading="役割の説明">
         <s-stack direction="block" gap="base">
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">オーナー</s-text>
-            <s-text tone="subdued">全店舗へのアクセス権、スタッフ管理、組織設定の変更が可能</s-text>
+          <s-stack direction="block" gap="base">
+            <s-text><strong>オーナー</strong></s-text>
+            <s-text>全店舗へのアクセス権、スタッフ管理、組織設定の変更が可能</s-text>
           </s-stack>
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">マネージャー</s-text>
-            <s-text tone="subdued">指定された店舗の管理（予約・リソース・設定）が可能</s-text>
+          <s-stack direction="block" gap="base">
+            <s-text><strong>マネージャー</strong></s-text>
+            <s-text>指定された店舗の管理（予約・リソース・設定）が可能</s-text>
           </s-stack>
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">スタッフ</s-text>
-            <s-text tone="subdued">指定された店舗の予約管理のみ可能</s-text>
+          <s-stack direction="block" gap="base">
+            <s-text><strong>スタッフ</strong></s-text>
+            <s-text>指定された店舗の予約管理のみ可能</s-text>
           </s-stack>
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">閲覧者</s-text>
-            <s-text tone="subdued">指定された店舗のデータを閲覧のみ可能</s-text>
+          <s-stack direction="block" gap="base">
+            <s-text><strong>閲覧者</strong></s-text>
+            <s-text>指定された店舗のデータを閲覧のみ可能</s-text>
           </s-stack>
         </s-stack>
       </s-section>
     </s-page>
   );
 }
-

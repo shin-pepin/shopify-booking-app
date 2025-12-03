@@ -32,10 +32,8 @@ interface LoaderData {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
 
-  // Selling Plan Groups を取得
   const sellingPlanGroups = await getSellingPlanGroups(admin);
 
-  // 商品一覧を取得（Selling Plan対応確認用）
   const productsResponse = await admin.graphql(`
     query {
       products(first: 50) {
@@ -119,9 +117,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return { success: false, error: "パラメータが不足しています" };
         }
 
-        return await addProductsToSellingPlanGroup(admin, sellingPlanGroupId, [
-          productId,
-        ]);
+        return await addProductsToSellingPlanGroup(admin, sellingPlanGroupId, [productId]);
       }
 
       case "removeProductFromSellingPlan": {
@@ -132,11 +128,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return { success: false, error: "パラメータが不足しています" };
         }
 
-        return await removeProductsFromSellingPlanGroup(
-          admin,
-          sellingPlanGroupId,
-          [productId]
-        );
+        return await removeProductsFromSellingPlanGroup(admin, sellingPlanGroupId, [productId]);
       }
 
       default:
@@ -218,53 +210,30 @@ export default function SettingsPage() {
         </s-paragraph>
 
         {sellingPlanGroups.length === 0 ? (
-          <s-box
-            padding="loose"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
+          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>プランが登録されていません</s-heading>
-              <s-paragraph>
-                「新規プラン作成」ボタンから手付金プランを作成してください。
-              </s-paragraph>
+              <s-paragraph>「新規プラン作成」ボタンから手付金プランを作成してください。</s-paragraph>
             </s-stack>
           </s-box>
         ) : (
           <s-stack direction="block" gap="base">
             {sellingPlanGroups.map((group) => (
-              <s-box
-                key={group.id}
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
-                <s-stack direction="block" gap="tight">
-                  <s-stack direction="inline" gap="base" wrap={false}>
-                    <s-stack direction="block" gap="tight" style={{ flex: 1 }}>
+              <s-box key={group.id} padding="base" borderWidth="base" borderRadius="base" background="subdued">
+                <s-stack direction="block" gap="base">
+                  <s-stack direction="inline" gap="base">
+                    <s-stack direction="block" gap="base">
                       <s-heading>{group.name}</s-heading>
-                      <s-text tone="subdued">
-                        コード: {group.merchantCode} | 適用商品: {group.productCount}件
-                      </s-text>
+                      <s-text>コード: {group.merchantCode} | 適用商品: {group.productCount}件</s-text>
                     </s-stack>
-                    <s-stack direction="inline" gap="tight">
+                    <s-stack direction="inline" gap="base">
                       <s-button
                         variant="tertiary"
-                        onClick={() =>
-                          setSelectedGroupId(
-                            selectedGroupId === group.id ? null : group.id
-                          )
-                        }
+                        onClick={() => setSelectedGroupId(selectedGroupId === group.id ? null : group.id)}
                       >
                         {selectedGroupId === group.id ? "閉じる" : "商品を追加"}
                       </s-button>
-                      <s-button
-                        variant="tertiary"
-                        tone="critical"
-                        onClick={() => handleDeletePlan(group.id)}
-                      >
+                      <s-button variant="tertiary" tone="critical" onClick={() => handleDeletePlan(group.id)}>
                         削除
                       </s-button>
                     </s-stack>
@@ -272,31 +241,18 @@ export default function SettingsPage() {
 
                   {/* 商品追加UI */}
                   {selectedGroupId === group.id && (
-                    <s-box
-                      padding="base"
-                      borderWidth="base"
-                      borderRadius="base"
-                      background="subdued"
-                      style={{ marginTop: "12px" }}
-                    >
-                      <s-stack direction="block" gap="tight">
-                        <s-text fontWeight="bold">商品を選択して追加:</s-text>
+                    <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+                      <s-stack direction="block" gap="base">
+                        <s-text><strong>商品を選択して追加:</strong></s-text>
                         {products.map((product) => (
-                          <s-stack
-                            key={product.id}
-                            direction="inline"
-                            gap="base"
-                            wrap={false}
-                          >
-                            <s-text style={{ flex: 1 }}>{product.title}</s-text>
+                          <s-stack key={product.id} direction="inline" gap="base">
+                            <s-text>{product.title}</s-text>
                             {product.hasSellingPlan ? (
                               <s-badge tone="success">適用済み</s-badge>
                             ) : (
                               <s-button
                                 variant="tertiary"
-                                onClick={() =>
-                                  handleAddProduct(group.id, product.id)
-                                }
+                                onClick={() => handleAddProduct(group.id, product.id)}
                                 {...(isLoading ? { loading: true } : {})}
                               >
                                 追加
@@ -318,13 +274,13 @@ export default function SettingsPage() {
       <s-section slot="aside" heading="手付金について">
         <s-stack direction="block" gap="base">
           <s-paragraph>
-            <s-text tone="subdued">
+            <s-text>
               手付金プランを使用すると、予約時に全額ではなく一部のみを決済し、
               残額は後日請求することができます。
             </s-text>
           </s-paragraph>
           <s-paragraph>
-            <s-text tone="subdued">
+            <s-text>
               例: 20%の手付金プランの場合
               <br />
               ・チェックアウト時: 商品価格の20%
@@ -370,25 +326,16 @@ export default function SettingsPage() {
               label={newDepositType === "PERCENTAGE" ? "手付金率 (%)" : "手付金額 (円)"}
               type="number"
               value={newDepositValue}
-              onChange={(e: CustomEvent) =>
-                setNewDepositValue(e.detail as string)
-              }
+              onChange={(e: CustomEvent) => setNewDepositValue(e.detail as string)}
               placeholder={newDepositType === "PERCENTAGE" ? "20" : "5000"}
             />
           </s-stack>
 
           <s-stack slot="footer" direction="inline" gap="base">
-            <s-button
-              variant="tertiary"
-              onClick={() => setShowCreateModal(false)}
-            >
+            <s-button variant="tertiary" onClick={() => setShowCreateModal(false)}>
               キャンセル
             </s-button>
-            <s-button
-              variant="primary"
-              onClick={handleCreatePlan}
-              {...(isLoading ? { loading: true } : {})}
-            >
+            <s-button variant="primary" onClick={handleCreatePlan} {...(isLoading ? { loading: true } : {})}>
               作成
             </s-button>
           </s-stack>
@@ -401,4 +348,3 @@ export default function SettingsPage() {
 export const headers: HeadersFunction = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
-

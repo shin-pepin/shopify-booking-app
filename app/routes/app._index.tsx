@@ -181,7 +181,6 @@ export default function Index() {
   const { locations, lastSyncedAt, usage } = useLoaderData<LoaderData>();
   const fetcher = useFetcher<{ success: boolean; syncedCount?: number }>();
   const shopify = useAppBridge();
-  const [isAnimating, setIsAnimating] = useState(false);
 
   const isSyncing =
     ["loading", "submitting"].includes(fetcher.state) &&
@@ -192,10 +191,6 @@ export default function Index() {
       shopify.toast.show(`${fetcher.data.syncedCount}件のロケーションを同期しました`);
     }
   }, [fetcher.data, shopify]);
-
-  useEffect(() => {
-    setIsAnimating(true);
-  }, []);
 
   const syncLocations = () => {
     fetcher.submit({}, { method: "POST" });
@@ -220,9 +215,9 @@ export default function Index() {
   };
 
   const getProgressBarColor = (percentage: number) => {
-    if (percentage >= 90) return "#EF4444"; // 赤
-    if (percentage >= 70) return "#F59E0B"; // 黄
-    return "#10B981"; // 緑
+    if (percentage >= 90) return "#EF4444";
+    if (percentage >= 70) return "#F59E0B";
+    return "#10B981";
   };
 
   return (
@@ -237,16 +232,11 @@ export default function Index() {
 
       {/* 使用量セクション */}
       <s-section heading="今月の予約状況">
-        <s-box
-          padding="base"
-          borderWidth="base"
-          borderRadius="base"
-          background={usage.isLimitReached ? "subdued" : "subdued"}
-        >
+        <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
           <s-stack direction="block" gap="base">
-            <s-stack direction="inline" gap="base" wrap={false}>
-              <s-stack direction="block" gap="tight" style={{ flex: 1 }}>
-                <s-stack direction="inline" gap="tight">
+            <s-stack direction="inline" gap="base">
+              <s-stack direction="block" gap="base">
+                <s-stack direction="inline" gap="base">
                   <s-heading>
                     {usage.currentUsage} / {usage.usageLimit === Infinity ? "∞" : usage.usageLimit}
                   </s-heading>
@@ -254,14 +244,12 @@ export default function Index() {
                     {usage.planName}プラン
                   </s-badge>
                 </s-stack>
-                <s-text tone="subdued">
+                <s-text>
                   予約件数 | 次回リセット: {formatDate(usage.cycleEnd)}
                 </s-text>
               </s-stack>
               {usage.isLimitReached && (
-                <s-button variant="primary">
-                  プランをアップグレード
-                </s-button>
+                <s-button variant="primary">プランをアップグレード</s-button>
               )}
             </s-stack>
 
@@ -287,25 +275,15 @@ export default function Index() {
                     }}
                   />
                 </div>
-                <s-stack direction="inline" gap="base" style={{ marginTop: "8px" }}>
-                  <s-text tone="subdued">
-                    残り {usage.remaining} 件
-                  </s-text>
-                  <s-text tone="subdued">
-                    ({Math.round(usage.usagePercentage)}% 使用)
-                  </s-text>
+                <s-stack direction="inline" gap="base">
+                  <s-text>残り {usage.remaining} 件</s-text>
+                  <s-text>({Math.round(usage.usagePercentage)}% 使用)</s-text>
                 </s-stack>
               </div>
             )}
 
             {usage.isLimitReached && (
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-                style={{ borderColor: "#EF4444" }}
-              >
+              <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
                 <s-text tone="critical">
                   ⚠️ 予約上限に達しました。新しい予約を受け付けるには、プランをアップグレードしてください。
                 </s-text>
@@ -322,21 +300,14 @@ export default function Index() {
           {lastSyncedAt && (
             <>
               <br />
-              <s-text tone="subdued">
-                最終同期: {formatDate(lastSyncedAt)}
-              </s-text>
+              最終同期: {formatDate(lastSyncedAt)}
             </>
           )}
         </s-paragraph>
 
         {/* ロケーション一覧 */}
         {locations.length === 0 ? (
-          <s-box
-            padding="loose"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>ロケーションが見つかりません</s-heading>
               <s-paragraph>
@@ -347,22 +318,17 @@ export default function Index() {
           </s-box>
         ) : (
           <s-stack direction="block" gap="base">
-            {locations.map((location, index) => (
+            {locations.map((location) => (
               <s-box
                 key={location.id}
                 padding="base"
                 borderWidth="base"
                 borderRadius="base"
-                background={location.isActive ? "subdued" : "subdued"}
-                style={{
-                  opacity: isAnimating ? 1 : 0,
-                  transform: isAnimating ? "translateY(0)" : "translateY(10px)",
-                  transition: `opacity 0.3s ease ${index * 0.05}s, transform 0.3s ease ${index * 0.05}s`,
-                }}
+                background="subdued"
               >
-                <s-stack direction="inline" gap="base" wrap={false}>
-                  <s-stack direction="block" gap="tight">
-                    <s-stack direction="inline" gap="tight">
+                <s-stack direction="inline" gap="base">
+                  <s-stack direction="block" gap="base">
+                    <s-stack direction="inline" gap="base">
                       <s-heading>{location.name}</s-heading>
                       {location.isActive ? (
                         <s-badge tone="success">有効</s-badge>
@@ -370,10 +336,8 @@ export default function Index() {
                         <s-badge tone="critical">無効</s-badge>
                       )}
                     </s-stack>
-                    <s-text tone="subdued">{formatAddress(location)}</s-text>
-                    {location.address1 && (
-                      <s-text tone="subdued">{location.address1}</s-text>
-                    )}
+                    <s-text>{formatAddress(location)}</s-text>
+                    {location.address1 && <s-text>{location.address1}</s-text>}
                   </s-stack>
                 </s-stack>
               </s-box>
@@ -385,42 +349,35 @@ export default function Index() {
       {/* サイドバー: プラン情報 */}
       <s-section slot="aside" heading="現在のプラン">
         <s-stack direction="block" gap="base">
-          <s-box
-            padding="base"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
-            <s-stack direction="block" gap="tight">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
               <s-heading>{usage.planName}</s-heading>
-              <s-text tone="subdued">
+              <s-text>
                 {usage.usageLimit === Infinity
                   ? "無制限の予約"
                   : `${usage.usageLimit}件/月`}
               </s-text>
             </s-stack>
           </s-box>
-          <s-stack direction="block" gap="tight">
-            <s-text fontWeight="bold">プラン一覧</s-text>
-            <s-text tone="subdued">Free: 30件/月 ($0)</s-text>
-            <s-text tone="subdued">Standard: 100件/月 ($9)</s-text>
-            <s-text tone="subdued">Pro: 500件/月 ($29)</s-text>
-            <s-text tone="subdued">Max: 無制限 ($79)</s-text>
+          <s-stack direction="block" gap="base">
+            <s-text><strong>プラン一覧</strong></s-text>
+            <s-text>Free: 10件/月 ($0)</s-text>
+            <s-text>Standard: 50件/月 ($29)</s-text>
+            <s-text>Pro: 300件/月 ($49) + LINE</s-text>
+            <s-text>Max: 無制限 ($120) + 多店舗</s-text>
           </s-stack>
         </s-stack>
       </s-section>
 
       <s-section slot="aside" heading="統計">
-        <s-stack direction="block" gap="tight">
+        <s-stack direction="block" gap="base">
           <s-stack direction="inline" gap="base">
             <s-text>登録ロケーション数:</s-text>
-            <s-text fontWeight="bold">{locations.length}</s-text>
+            <s-text><strong>{locations.length}</strong></s-text>
           </s-stack>
           <s-stack direction="inline" gap="base">
             <s-text>有効なロケーション:</s-text>
-            <s-text fontWeight="bold">
-              {locations.filter((l) => l.isActive).length}
-            </s-text>
+            <s-text><strong>{locations.filter((l) => l.isActive).length}</strong></s-text>
           </s-stack>
         </s-stack>
       </s-section>

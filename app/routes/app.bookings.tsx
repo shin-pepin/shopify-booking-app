@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -85,7 +85,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   try {
     if (action === "confirm") {
-      // 予約を確定し、使用量をインクリメント
       const updatedBooking = await db.booking.update({
         where: { id: bookingId },
         data: { status: "CONFIRMED" },
@@ -97,7 +96,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       });
       await incrementUsage(shop);
 
-      // LINE通知を送信（非同期で実行、エラーは無視）
       sendBookingConfirmationNotification(shop, {
         id: updatedBooking.id,
         customerId: updatedBooking.customerId,
@@ -111,7 +109,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       return { success: true, message: "予約を確定しました" };
     } else if (action === "cancel") {
-      // 予約をキャンセルし、確定済みだった場合は使用量をデクリメント
       const wasConfirmed = booking.status === "CONFIRMED";
       const updatedBooking = await db.booking.update({
         where: { id: bookingId },
@@ -125,7 +122,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         await decrementUsage(shop);
       }
 
-      // LINE通知を送信（非同期で実行、エラーは無視）
       sendBookingCancellationNotification(shop, {
         id: updatedBooking.id,
         customerId: updatedBooking.customerId,
@@ -137,11 +133,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       return { success: true, message: "予約をキャンセルしました" };
     } else if (action === "delete") {
-      // 予約を削除
       const wasConfirmed = booking.status === "CONFIRMED";
-      await db.booking.delete({
-        where: { id: bookingId },
-      });
+      await db.booking.delete({ where: { id: bookingId } });
       if (wasConfirmed) {
         await decrementUsage(shop);
       }
@@ -197,21 +190,10 @@ export default function BookingsPage() {
   };
 
   return (
-    <s-page
-      heading="予約管理"
-      backAction={{
-        url: "/app",
-        accessibilityLabel: "ダッシュボードに戻る",
-      }}
-    >
+    <s-page heading="予約管理">
       <s-section heading={`予約一覧（${bookings.length}件）`}>
         {bookings.length === 0 ? (
-          <s-box
-            padding="loose"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
+          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>予約がありません</s-heading>
               <s-paragraph>
@@ -229,8 +211,8 @@ export default function BookingsPage() {
                 borderRadius="base"
                 background="subdued"
               >
-                <s-stack direction="block" gap="tight">
-                  <s-stack direction="inline" gap="tight">
+                <s-stack direction="block" gap="base">
+                  <s-stack direction="inline" gap="base">
                     <s-heading>{formatDateTime(booking.startAt)}</s-heading>
                     {getStatusBadge(booking.status)}
                   </s-stack>
@@ -242,11 +224,11 @@ export default function BookingsPage() {
                     )}
                   </s-stack>
                   {(booking.customerName || booking.customerEmail) && (
-                    <s-text tone="subdued">
+                    <s-text>
                       顧客: {booking.customerName || "名前なし"} ({booking.customerEmail || "メールなし"})
                     </s-text>
                   )}
-                  <s-stack direction="inline" gap="tight">
+                  <s-stack direction="inline" gap="base">
                     {booking.status === "PENDING_PAYMENT" && (
                       <s-button
                         variant="primary"
@@ -264,7 +246,7 @@ export default function BookingsPage() {
                       </s-button>
                     )}
                     <s-button
-                      variant="plain"
+                      variant="tertiary"
                       tone="critical"
                       onClick={() => handleAction(booking.id, "delete")}
                     >
@@ -280,26 +262,21 @@ export default function BookingsPage() {
 
       <s-section slot="aside" heading="ヘルプ">
         <s-stack direction="block" gap="base">
-          <s-text tone="subdued">
+          <s-text>
             <strong>支払い待ち</strong>: カートに追加されたが、まだ決済されていない予約
           </s-text>
-          <s-text tone="subdued">
+          <s-text>
             <strong>確定</strong>: 決済完了または手動で確定された予約
           </s-text>
-          <s-text tone="subdued">
+          <s-text>
             <strong>キャンセル</strong>: キャンセルされた予約
           </s-text>
         </s-stack>
       </s-section>
 
       <s-section slot="aside" heading="注意">
-        <s-box
-          padding="base"
-          borderWidth="base"
-          borderRadius="base"
-          background="subdued"
-        >
-          <s-text tone="subdued">
+        <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+          <s-text>
             開発中は「orders/create」webhookが無効のため、
             予約確定は手動で行う必要があります。
             本番環境では自動確定されます。
@@ -309,4 +286,3 @@ export default function BookingsPage() {
     </s-page>
   );
 }
-

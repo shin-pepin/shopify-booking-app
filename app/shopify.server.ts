@@ -10,13 +10,13 @@ import prisma from "./db.server";
 
 /**
  * 料金プラン定義
- * 
- * | プラン   | 月額   | 予約上限 | 主な機能 |
- * |---------|--------|---------|---------|
- * | Free    | $0     | 30件/月  | 基本機能 |
- * | Standard| $9/月  | 100件/月 | + 複数ロケーション |
- * | Pro     | $29/月 | 500件/月 | + 優先サポート |
- * | Max     | $79/月 | 無制限   | + カスタム機能 |
+ *
+ * | プラン名   | 価格/月 | 月間予約上限 | 手付金 | LINE連携      | 複数店舗 | 備考                         |
+ * |-----------|--------|-------------|-------|--------------|---------|------------------------------|
+ * | Free      | $0     | 10件        | ○     | ×            | ×       | コンセプト実証用・小規模店向け |
+ * | Standard  | $29    | 50件        | ○     | ×            | ×       | 成長期の店舗向け              |
+ * | Pro       | $49    | 300件       | ○     | ○ (自動化)    | ×       | 本格的な運営向け・LINE活用前提 |
+ * | Max       | $120   | 無制限       | ○     | ○ (複数Ch)   | ○       | 多店舗展開向け               |
  */
 export const BILLING_PLANS = {
   FREE: {
@@ -24,32 +24,63 @@ export const BILLING_PLANS = {
     amount: 0,
     currencyCode: "USD",
     interval: BillingInterval.Every30Days,
-    usageLimit: 30,
-    features: ["基本的な予約機能", "1ロケーション", "メールサポート"],
+    usageLimit: 10,
+    features: [
+      "10件/月の予約",
+      "手付金機能",
+      "基本的なカレンダーウィジェット",
+      "メールサポート",
+    ],
+    lineEnabled: false,
+    multiShopEnabled: false,
   },
   STANDARD: {
     name: "Standard",
-    amount: 9,
-    currencyCode: "USD",
-    interval: BillingInterval.Every30Days,
-    usageLimit: 100,
-    features: ["100件/月の予約", "複数ロケーション", "優先メールサポート"],
-  },
-  PRO: {
-    name: "Pro",
     amount: 29,
     currencyCode: "USD",
     interval: BillingInterval.Every30Days,
-    usageLimit: 500,
-    features: ["500件/月の予約", "無制限ロケーション", "チャットサポート", "分析ダッシュボード"],
+    usageLimit: 50,
+    features: [
+      "50件/月の予約",
+      "手付金機能",
+      "複数リソース管理",
+      "優先メールサポート",
+    ],
+    lineEnabled: false,
+    multiShopEnabled: false,
+  },
+  PRO: {
+    name: "Pro",
+    amount: 49,
+    currencyCode: "USD",
+    interval: BillingInterval.Every30Days,
+    usageLimit: 300,
+    features: [
+      "300件/月の予約",
+      "手付金機能",
+      "LINE連携（自動通知）",
+      "予約リマインダー",
+      "チャットサポート",
+    ],
+    lineEnabled: true,
+    multiShopEnabled: false,
   },
   MAX: {
     name: "Max",
-    amount: 79,
+    amount: 120,
     currencyCode: "USD",
     interval: BillingInterval.Every30Days,
     usageLimit: Infinity,
-    features: ["無制限の予約", "全機能", "電話サポート", "カスタム連携"],
+    features: [
+      "無制限の予約",
+      "手付金機能",
+      "LINE連携（複数チャネル）",
+      "多店舗管理",
+      "スタッフ権限管理",
+      "統合ダッシュボード"
+    ],
+    lineEnabled: true,
+    multiShopEnabled: true,
   },
 } as const;
 

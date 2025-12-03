@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type {
   ActionFunctionArgs,
   HeadersFunction,
@@ -95,7 +95,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return { success: false, error: "名前とタイプは必須です" };
         }
 
-        // リソースを作成
         const resource = await db.resource.create({
           data: {
             shopId: shop,
@@ -104,10 +103,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           },
         });
 
-        // 選択されたロケーションにデフォルトスケジュールを作成
         if (locationIds.length > 0) {
           const defaultSchedules = locationIds.flatMap((locationId) =>
-            // 月〜金のデフォルトスケジュール
             [1, 2, 3, 4, 5].map((dayOfWeek) => ({
               resourceId: resource.id,
               locationId,
@@ -133,7 +130,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return { success: false, error: "リソースIDが必要です" };
         }
 
-        // リソースを削除（関連するスケジュールも自動削除）
         await db.resource.delete({
           where: { id: resourceId },
         });
@@ -167,7 +163,6 @@ export default function ResourcesPage() {
   const [newResourceType, setNewResourceType] = useState<ResourceType>("STAFF");
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
 
   const isLoading = fetcher.state !== "idle";
 
@@ -177,7 +172,6 @@ export default function ResourcesPage() {
         shopify.toast.show("リソースを作成しました");
         setShowCreateModal(false);
         resetForm();
-        // 新しく作成したリソースの詳細ページに遷移
         if (fetcher.data.resourceId) {
           navigate(`/app/resources/${fetcher.data.resourceId}`);
         }
@@ -189,10 +183,6 @@ export default function ResourcesPage() {
       shopify.toast.show(fetcher.data.error);
     }
   }, [fetcher.data, shopify, navigate]);
-
-  useEffect(() => {
-    setIsAnimating(true);
-  }, []);
 
   const resetForm = () => {
     setNewResourceName("");
@@ -222,14 +212,6 @@ export default function ResourcesPage() {
     fetcher.submit(formData, { method: "POST" });
   };
 
-  const toggleLocation = (locationId: string) => {
-    setSelectedLocationIds((prev) =>
-      prev.includes(locationId)
-        ? prev.filter((id) => id !== locationId)
-        : [...prev, locationId]
-    );
-  };
-
   const getTypeLabel = (type: ResourceType) => {
     switch (type) {
       case "STAFF":
@@ -243,16 +225,16 @@ export default function ResourcesPage() {
     }
   };
 
-  const getTypeBadgeTone = (type: ResourceType) => {
+  const getTypeBadgeTone = (type: ResourceType): "info" | "success" | "warning" => {
     switch (type) {
       case "STAFF":
         return "info";
       case "ROOM":
         return "success";
       case "EQUIPMENT":
-        return "attention";
+        return "warning";
       default:
-        return "default";
+        return "info";
     }
   };
 
@@ -270,50 +252,35 @@ export default function ResourcesPage() {
         </s-paragraph>
 
         {resources.length === 0 ? (
-          <s-box
-            padding="loose"
-            borderWidth="base"
-            borderRadius="base"
-            background="subdued"
-          >
+          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>リソースが登録されていません</s-heading>
-              <s-paragraph>
-                「新規作成」ボタンからスタッフや部屋を登録してください。
-              </s-paragraph>
+              <s-paragraph>「新規作成」ボタンからスタッフや部屋を登録してください。</s-paragraph>
             </s-stack>
           </s-box>
         ) : (
           <s-stack direction="block" gap="base">
-            {resources.map((resource, index) => (
+            {resources.map((resource) => (
               <s-box
                 key={resource.id}
                 padding="base"
                 borderWidth="base"
                 borderRadius="base"
                 background="subdued"
-                style={{
-                  opacity: isAnimating ? 1 : 0,
-                  transform: isAnimating ? "translateY(0)" : "translateY(10px)",
-                  transition: `opacity 0.3s ease ${index * 0.05}s, transform 0.3s ease ${index * 0.05}s`,
-                  cursor: "pointer",
-                }}
-                onClick={() => navigate(`/app/resources/${resource.id}`)}
               >
-                <s-stack direction="inline" gap="base" wrap={false}>
-                  <s-stack direction="block" gap="tight" style={{ flex: 1 }}>
-                    <s-stack direction="inline" gap="tight">
+                <s-stack direction="inline" gap="base">
+                  <s-stack direction="block" gap="base">
+                    <s-stack direction="inline" gap="base">
                       <s-heading>{resource.name}</s-heading>
                       <s-badge tone={getTypeBadgeTone(resource.type)}>
                         {getTypeLabel(resource.type)}
                       </s-badge>
                     </s-stack>
-                    <s-text tone="subdued">
-                      スケジュール: {resource._count.schedules}件 / 予約:{" "}
-                      {resource._count.bookings}件
+                    <s-text>
+                      スケジュール: {resource._count.schedules}件 / 予約: {resource._count.bookings}件
                     </s-text>
                   </s-stack>
-                  <s-stack direction="inline" gap="tight">
+                  <s-stack direction="inline" gap="base">
                     <s-button
                       variant="tertiary"
                       onClick={(e: React.MouseEvent) => {
@@ -343,28 +310,22 @@ export default function ResourcesPage() {
 
       {/* サイドバー: 統計情報 */}
       <s-section slot="aside" heading="統計">
-        <s-stack direction="block" gap="tight">
+        <s-stack direction="block" gap="base">
           <s-stack direction="inline" gap="base">
             <s-text>総リソース数:</s-text>
-            <s-text fontWeight="bold">{resources.length}</s-text>
+            <s-text><strong>{resources.length}</strong></s-text>
           </s-stack>
           <s-stack direction="inline" gap="base">
             <s-text>スタッフ:</s-text>
-            <s-text fontWeight="bold">
-              {resources.filter((r) => r.type === "STAFF").length}
-            </s-text>
+            <s-text><strong>{resources.filter((r) => r.type === "STAFF").length}</strong></s-text>
           </s-stack>
           <s-stack direction="inline" gap="base">
             <s-text>部屋:</s-text>
-            <s-text fontWeight="bold">
-              {resources.filter((r) => r.type === "ROOM").length}
-            </s-text>
+            <s-text><strong>{resources.filter((r) => r.type === "ROOM").length}</strong></s-text>
           </s-stack>
           <s-stack direction="inline" gap="base">
             <s-text>機材:</s-text>
-            <s-text fontWeight="bold">
-              {resources.filter((r) => r.type === "EQUIPMENT").length}
-            </s-text>
+            <s-text><strong>{resources.filter((r) => r.type === "EQUIPMENT").length}</strong></s-text>
           </s-stack>
         </s-stack>
       </s-section>
@@ -372,13 +333,13 @@ export default function ResourcesPage() {
       <s-section slot="aside" heading="ロケーション">
         {locations.length === 0 ? (
           <s-paragraph>
-            <s-text tone="subdued">
+            <s-text>
               ロケーションが未登録です。
               <s-link href="/app">ホーム</s-link>から同期してください。
             </s-text>
           </s-paragraph>
         ) : (
-          <s-stack direction="block" gap="tight">
+          <s-stack direction="block" gap="base">
             {locations.map((loc) => (
               <s-text key={loc.id}>{loc.name}</s-text>
             ))}
@@ -400,9 +361,7 @@ export default function ResourcesPage() {
             <s-text-field
               label="リソース名"
               value={newResourceName}
-              onChange={(e: CustomEvent) =>
-                setNewResourceName(e.detail as string)
-              }
+              onChange={(e: CustomEvent) => setNewResourceName(e.detail as string)}
               placeholder="例: 佐藤太郎、会議室A"
             />
 
@@ -440,15 +399,9 @@ export default function ResourcesPage() {
             )}
 
             {locations.length === 0 && (
-              <s-box
-                padding="base"
-                borderWidth="base"
-                borderRadius="base"
-                background="subdued"
-              >
+              <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
                 <s-text tone="caution">
-                  ⚠️
-                  ロケーションが未登録のため、スケジュールを設定できません。
+                  ⚠️ ロケーションが未登録のため、スケジュールを設定できません。
                   先にホーム画面からロケーションを同期してください。
                 </s-text>
               </s-box>
@@ -510,4 +463,3 @@ export default function ResourcesPage() {
 export const headers: HeadersFunction = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
-
