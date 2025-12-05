@@ -313,7 +313,7 @@ export default function SettingsPage() {
             <s-stack direction="block" gap="base">
               <s-text><strong>例1: 20%前払い</strong></s-text>
               <s-text>
-                10,000円の施術の場合...
+                10,000円のサービスの場合...
                 <br />
                 ・予約時: 2,000円
                 <br />
@@ -338,10 +338,10 @@ export default function SettingsPage() {
             <s-text>
               前払いを設定すると、無断キャンセルが<strong>大幅に減る</strong>というデータがあります。
             </s-text>
-            <s-text>
-              高額メニューには高めの前払い、
-              気軽なメニューには低めの前払いを設定するのがおすすめです。
-            </s-text>
+          <s-text>
+            高額なサービスには高めの前払い、
+            気軽なメニューには低めの前払いを設定するのがおすすめです。
+          </s-text>
           </s-stack>
         </s-box>
       </s-section>

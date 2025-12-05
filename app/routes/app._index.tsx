@@ -272,17 +272,17 @@ export default function Index() {
                 <s-box padding="base" borderWidth="base" borderRadius="base" background={resourceCount > 0 ? "subdued" : "transparent"}>
                   <s-stack direction="inline" gap="base">
                     <s-text>{resourceCount > 0 ? "✅" : "2️⃣"}</s-text>
-                    <s-stack direction="block" gap="base">
-                      <s-text><strong>予約を受ける人・場所を登録</strong></s-text>
-                      {resourceCount === 0 ? (
-                        <s-text>
-                          予約を受けたい美容師さんや部屋を登録しましょう
-                          <br />
-                          <s-link href="/app/resources">👉 登録ページへ</s-link>
-                        </s-text>
-                      ) : (
-                        <s-text>できました！{resourceCount}件登録されています</s-text>
-                      )}
+                      <s-stack direction="block" gap="base">
+                        <s-text><strong>予約を受ける人・場所を登録</strong></s-text>
+                        {resourceCount === 0 ? (
+                          <s-text>
+                            予約を受けるスタッフや部屋・設備を登録しましょう
+                            <br />
+                            <s-link href="/app/resources">👉 登録ページへ</s-link>
+                          </s-text>
+                        ) : (
+                          <s-text>できました！{resourceCount}件登録されています</s-text>
+                        )}
                     </s-stack>
                   </s-stack>
                 </s-box>
@@ -336,7 +336,7 @@ export default function Index() {
                   progress={Math.min(usage.usagePercentage, 100)}
                   tone={getProgressBarTone(usage.usagePercentage)}
                 />
-                <s-stack direction="inline" gap="base" align="center">
+                <s-stack direction="inline" gap="base">
                   <s-text>
                     {usage.remaining > 0 
                       ? `あと${usage.remaining}件まで受付できます`

@@ -63,8 +63,8 @@ export default function GuidePage() {
                 <s-text><strong>誰が（何が）予約を受けるか決めましょう</strong></s-text>
               </s-stack>
               <s-paragraph>
-                予約を受け付けたい美容師さんや部屋を登録します。
-                お一人ずつ、または部屋ごとに登録してください。
+                予約を受け付けるスタッフや部屋・スペースを登録します。
+                担当者ごと、または場所ごとに登録してください。
               </s-paragraph>
               <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
                 <s-stack direction="block" gap="base">
@@ -77,8 +77,8 @@ export default function GuidePage() {
               </s-box>
               <s-paragraph>
                 <s-text>
-                  💡 <strong>ヒント:</strong> 「田中さん」「山田さん」のように、
-                  お客様がわかりやすい名前で登録してください。
+                  💡 <strong>ヒント:</strong> お客様にわかりやすい名前で登録してください。
+                  例: 「山田」「会議室A」「スタジオ1」など
                 </s-text>
               </s-paragraph>
               <s-button href="/app/resources" variant="primary">👤 スタッフ・部屋の登録へ</s-button>

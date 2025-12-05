@@ -316,7 +316,7 @@ export default function ResourcesPage() {
               </s-paragraph>
               <s-paragraph>
                 <s-text>
-                  💡 ヒント: 美容師さん一人ひとりの名前や、部屋Aなどの名前で登録してください。
+                  💡 ヒント: スタッフの名前や、会議室A、ブースBなどの名前で登録してください。
                 </s-text>
               </s-paragraph>
             </s-stack>
@@ -448,7 +448,7 @@ export default function ResourcesPage() {
             type="text"
             value={newResourceName}
             onChange={(e) => setNewResourceName(e.target.value)}
-            placeholder="例: 田中さん、部屋A"
+            placeholder="例: 山田さん、会議室A、ブースB"
             style={{
               width: "100%",
               padding: "12px 14px",
@@ -470,9 +470,9 @@ export default function ResourcesPage() {
           </label>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {[
-              { label: "👤 スタッフ", desc: "美容師さん、セラピストさんなど", value: "STAFF" },
-              { label: "🚪 部屋・席", desc: "カット台、個室、ベッドなど", value: "ROOM" },
-              { label: "🔧 機材", desc: "特殊機器、レンタル品など", value: "EQUIPMENT" },
+              { label: "👤 スタッフ", desc: "担当者、インストラクター、コンサルタントなど", value: "STAFF" },
+              { label: "🚪 部屋・スペース", desc: "個室、ブース、会議室、スタジオなど", value: "ROOM" },
+              { label: "🔧 機材・設備", desc: "特殊機器、レンタル品、備品など", value: "EQUIPMENT" },
             ].map((option) => (
               <label 
                 key={option.value} 

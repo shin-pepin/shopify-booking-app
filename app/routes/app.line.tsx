@@ -376,8 +376,8 @@ export default function LineSettingsPage() {
                 友だち追加してもらう必要があります。
               </s-text>
               <s-text>
-                店頭にQRコードを置いたり、
-                注文完了ページに案内を表示するのがおすすめです！
+                店頭やウェブサイトにQRコードを置いたり、
+                予約完了ページに案内を表示するのがおすすめです！
               </s-text>
             </s-stack>
           </s-box>

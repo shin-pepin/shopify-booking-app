@@ -479,9 +479,9 @@ export default function ResourceDetailPage() {
             <s-text>
               <strong>例:</strong>
               <br />
-              ・月・水・金は渋谷店
+              ・月・水・金は本店
               <br />
-              ・火・木は原宿店
+              ・火・木は支店
             </s-text>
           </s-box>
         </s-stack>

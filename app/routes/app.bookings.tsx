@@ -276,7 +276,7 @@ export default function BookingsPage() {
         {bookings.length === 0 ? (
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-heading>🎉 まだ予約がありません</s-heading>
+              <s-heading>まだ予約がありません</s-heading>
               <s-paragraph>
                 お客様から予約が入ると、ここに表示されます。
               </s-paragraph>
