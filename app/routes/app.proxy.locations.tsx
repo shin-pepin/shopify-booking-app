@@ -14,17 +14,26 @@ import db from "../db.server";
  * @returns JSON形式のロケーション一覧
  */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.public.appProxy(request);
-
-  if (!session) {
-    return jsonResponse({ success: false, error: "認証に失敗しました" }, 401);
-  }
-
-  const shop = session.shop;
-  const url = new URL(request.url);
-  const resourceId = url.searchParams.get("resourceId");
-
+  console.log("[App Proxy Locations] Request received");
+  
   try {
+    // App Proxy認証
+    const authResult = await authenticate.public.appProxy(request);
+    console.log("[App Proxy Locations] Auth result:", JSON.stringify(authResult, null, 2));
+    
+    // sessionが存在するか確認
+    const session = authResult?.session;
+    if (!session || !session.shop) {
+      console.error("[App Proxy Locations] No session or shop found");
+      return jsonResponse({ success: false, error: "認証に失敗しました" }, 401);
+    }
+
+    const shop = session.shop;
+    console.log("[App Proxy Locations] Shop:", shop);
+    
+    const url = new URL(request.url);
+    const resourceId = url.searchParams.get("resourceId");
+
     // フィルタ条件を構築
     const whereCondition: {
       shopId: string;
@@ -42,6 +51,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       };
     }
 
+    console.log("[App Proxy Locations] Query condition:", JSON.stringify(whereCondition));
+
     const locations = await db.location.findMany({
       where: whereCondition,
       select: {
@@ -58,6 +69,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
       orderBy: { name: "asc" },
     });
+
+    console.log("[App Proxy Locations] Found locations:", locations.length);
 
     const response = {
       success: true,
@@ -89,7 +102,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     return jsonResponse(response, 200);
   } catch (error) {
     console.error("[App Proxy Locations] Error:", error);
-    return jsonResponse({ success: false, error: "内部エラーが発生しました" }, 500);
+    const errorMessage = error instanceof Error ? error.message : "内部エラーが発生しました";
+    return jsonResponse({ success: false, error: errorMessage }, 500);
   }
 };
 
@@ -99,8 +113,7 @@ function jsonResponse(data: unknown, status: number = 200): Response {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "public, max-age=300", // ロケーション一覧は5分キャッシュ
+      "Cache-Control": "no-cache",
     },
   });
 }
-

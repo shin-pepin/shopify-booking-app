@@ -4,6 +4,13 @@
 .booking-widget__loading{display:flex;flex-direction:column;align-items:center;padding:40px;color:var(--bw-muted)}
 .booking-widget__spinner{width:28px;height:28px;border:3px solid var(--bw-border);border-top-color:var(--bw-accent);border-radius:50%;animation:bw-spin .8s linear infinite;margin-bottom:10px}
 @keyframes bw-spin{to{transform:rotate(360deg)}}
+
+/* セットアップ画面 */
+.booking-widget__setup{text-align:center;padding:40px 20px}
+.booking-widget__setup-icon{font-size:48px;margin-bottom:16px}
+.booking-widget__setup-title{font-size:18px;font-weight:600;margin:0 0 12px}
+.booking-widget__setup-text{font-size:14px;color:var(--bw-muted);margin:0;line-height:1.6}
+
 .booking-widget__header{margin-bottom:16px}
 .booking-widget__title{font-size:16px;font-weight:600;margin:0}
 .booking-widget__steps{display:flex;gap:8px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--bw-border)}

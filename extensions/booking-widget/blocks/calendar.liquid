@@ -37,11 +37,25 @@
 {% endschema %}
 
 <div class="booking-widget" data-proxy-base="/apps/booking" data-theme="{{ block.settings.theme }}" data-slot-interval="{{ block.settings.slot_interval }}">
+  <!-- ローディング中 -->
   <div data-loading style="display:flex;flex-direction:column;align-items:center;padding:40px">
     <div class="booking-widget__spinner"></div>
     <p>読み込み中...</p>
   </div>
 
+  <!-- セットアップが必要な場合 -->
+  <div data-setup-required style="display:none">
+    <div class="booking-widget__setup">
+      <div class="booking-widget__setup-icon">📅</div>
+      <h3 class="booking-widget__setup-title">予約カレンダー</h3>
+      <p class="booking-widget__setup-text" data-setup-message>
+        現在準備中です。<br>
+        もうしばらくお待ちください。
+      </p>
+    </div>
+  </div>
+
+  <!-- メインコンテンツ -->
   <div data-content style="display:none">
     <div class="booking-widget__header">
       <h3 class="booking-widget__title">{{ block.settings.widget_title }}</h3>
@@ -55,7 +69,7 @@
     </div>
 
     <div class="booking-widget__section" data-section="resource" style="display:none">
-      <label class="booking-widget__label">担当者を選択</label>
+      <label class="booking-widget__label">担当を選択</label>
       <div data-resource-list></div>
     </div>
 
