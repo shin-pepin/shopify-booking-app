@@ -200,7 +200,7 @@ export default function LineSettingsPage() {
     return (
       <s-page heading="LINE連携設定">
         <s-section>
-          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>Pro/Maxプラン専用機能</s-heading>
               <s-paragraph>
@@ -246,7 +246,6 @@ export default function LineSettingsPage() {
             {config && (
               <s-button
                 variant={config.isEnabled ? "tertiary" : "primary"}
-                tone={config.isEnabled ? "critical" : undefined}
                 onClick={handleToggle}
                 {...(isSubmitting ? { loading: true, disabled: true } : {})}
               >

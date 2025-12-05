@@ -173,6 +173,7 @@ export default function BookingsPage() {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Asia/Tokyo",
     });
   };
 
@@ -193,7 +194,7 @@ export default function BookingsPage() {
     <s-page heading="予約管理">
       <s-section heading={`予約一覧（${bookings.length}件）`}>
         {bookings.length === 0 ? (
-          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>予約がありません</s-heading>
               <s-paragraph>
@@ -239,7 +240,6 @@ export default function BookingsPage() {
                     )}
                     {booking.status !== "CANCELLED" && (
                       <s-button
-                        tone="critical"
                         onClick={() => handleAction(booking.id, "cancel")}
                       >
                         キャンセル
@@ -247,7 +247,6 @@ export default function BookingsPage() {
                     )}
                     <s-button
                       variant="tertiary"
-                      tone="critical"
                       onClick={() => handleAction(booking.id, "delete")}
                     >
                       削除

@@ -189,6 +189,7 @@ export default function OrganizationPage() {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Asia/Tokyo",
     });
   };
 
@@ -210,7 +211,7 @@ export default function OrganizationPage() {
     return (
       <s-page heading="多店舗管理">
         <s-section>
-          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>Maxプラン専用機能</s-heading>
               <s-paragraph>
@@ -238,7 +239,7 @@ export default function OrganizationPage() {
       <s-page heading="多店舗管理">
         <s-section heading="組織を作成">
           {!showCreateForm ? (
-            <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
+            <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
               <s-stack direction="block" gap="base">
                 <s-heading>組織を作成して多店舗管理を開始</s-heading>
                 <s-paragraph>
@@ -299,7 +300,7 @@ export default function OrganizationPage() {
   // 組織ダッシュボード
   return (
     <s-page heading={organization.name}>
-      <s-button slot="primary-action" url="/app/organization/staff">
+      <s-button slot="primary-action" variant="primary" url="/app/organization/staff">
         スタッフ管理
       </s-button>
 

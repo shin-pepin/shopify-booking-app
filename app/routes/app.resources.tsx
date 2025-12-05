@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type {
   ActionFunctionArgs,
   HeadersFunction,
@@ -163,8 +163,28 @@ export default function ResourcesPage() {
   const [newResourceType, setNewResourceType] = useState<ResourceType>("STAFF");
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  
+  const createModalRef = useRef<HTMLDialogElement>(null);
+  const deleteModalRef = useRef<HTMLDialogElement>(null);
 
   const isLoading = fetcher.state !== "idle";
+
+  // モーダルの開閉を制御
+  useEffect(() => {
+    if (showCreateModal) {
+      createModalRef.current?.showModal();
+    } else {
+      createModalRef.current?.close();
+    }
+  }, [showCreateModal]);
+
+  useEffect(() => {
+    if (deleteTarget) {
+      deleteModalRef.current?.showModal();
+    } else {
+      deleteModalRef.current?.close();
+    }
+  }, [deleteTarget]);
 
   useEffect(() => {
     if (fetcher.data?.success) {
@@ -172,9 +192,7 @@ export default function ResourcesPage() {
         shopify.toast.show("リソースを作成しました");
         setShowCreateModal(false);
         resetForm();
-        if (fetcher.data.resourceId) {
-          navigate(`/app/resources/${fetcher.data.resourceId}`);
-        }
+        // 作成後は同じページに留まり、リストが自動更新される
       } else if (fetcher.data.action === "deleted") {
         shopify.toast.show("リソースを削除しました");
         setDeleteTarget(null);
@@ -182,7 +200,7 @@ export default function ResourcesPage() {
     } else if (fetcher.data?.error) {
       shopify.toast.show(fetcher.data.error);
     }
-  }, [fetcher.data, shopify, navigate]);
+  }, [fetcher.data, shopify]);
 
   const resetForm = () => {
     setNewResourceName("");
@@ -240,9 +258,30 @@ export default function ResourcesPage() {
 
   return (
     <s-page heading="リソース管理">
-      <s-button slot="primary-action" onClick={() => setShowCreateModal(true)}>
-        新規作成
-      </s-button>
+      <s-section>
+        <s-stack direction="inline" gap="base" align="center">
+          <s-heading>リソース管理</s-heading>
+          <button
+            type="button"
+            onClick={() => {
+              console.log("新規作成ボタンがクリックされました");
+              setShowCreateModal(true);
+            }}
+            style={{
+              backgroundColor: "#008060",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              padding: "8px 16px",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: "pointer",
+            }}
+          >
+            新規作成
+          </button>
+        </s-stack>
+      </s-section>
 
       {/* メインセクション: リソース一覧 */}
       <s-section heading="登録済みリソース">
@@ -252,7 +291,7 @@ export default function ResourcesPage() {
         </s-paragraph>
 
         {resources.length === 0 ? (
-          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>リソースが登録されていません</s-heading>
               <s-paragraph>「新規作成」ボタンからスタッフや部屋を登録してください。</s-paragraph>
@@ -292,7 +331,6 @@ export default function ResourcesPage() {
                     </s-button>
                     <s-button
                       variant="tertiary"
-                      tone="critical"
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
                         setDeleteTarget(resource.id);
@@ -348,114 +386,186 @@ export default function ResourcesPage() {
       </s-section>
 
       {/* 新規作成モーダル */}
-      {showCreateModal && (
-        <s-modal
-          heading="新規リソース作成"
-          open={showCreateModal}
-          onClose={() => {
-            setShowCreateModal(false);
-            resetForm();
-          }}
-        >
-          <s-stack direction="block" gap="base">
-            <s-text-field
-              label="リソース名"
-              value={newResourceName}
-              onChange={(e: CustomEvent) => setNewResourceName(e.detail as string)}
-              placeholder="例: 佐藤太郎、会議室A"
-            />
+      <dialog
+        ref={createModalRef}
+        onClose={() => {
+          setShowCreateModal(false);
+          resetForm();
+        }}
+        style={{
+          border: "none",
+          borderRadius: "12px",
+          padding: "24px",
+          maxWidth: "500px",
+          width: "90%",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+        }}
+      >
+        <h2 style={{ margin: "0 0 16px 0", fontSize: "18px" }}>新規リソース作成</h2>
+        
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", marginBottom: "4px", fontWeight: "500" }}>
+            リソース名
+          </label>
+          <input
+            type="text"
+            value={newResourceName}
+            onChange={(e) => setNewResourceName(e.target.value)}
+            placeholder="例: 佐藤太郎、会議室A"
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #ccc",
+              borderRadius: "6px",
+              fontSize: "14px",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
 
-            <s-choice-list
-              title="リソースタイプ"
-              name="resourceType"
-              choices={[
-                { label: "スタッフ（美容師、セラピストなど）", value: "STAFF" },
-                { label: "部屋（会議室、施術室など）", value: "ROOM" },
-                { label: "機材（プロジェクター、カメラなど）", value: "EQUIPMENT" },
-              ]}
-              selected={[newResourceType]}
-              onChange={(e: CustomEvent) => {
-                const selected = e.detail as string[];
-                if (selected.length > 0) {
-                  setNewResourceType(selected[0] as ResourceType);
-                }
-              }}
-            />
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
+            リソースタイプ
+          </label>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {[
+              { label: "スタッフ（美容師、セラピストなど）", value: "STAFF" },
+              { label: "部屋（会議室、施術室など）", value: "ROOM" },
+              { label: "機材（プロジェクター、カメラなど）", value: "EQUIPMENT" },
+            ].map((option) => (
+              <label key={option.value} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                <input
+                  type="radio"
+                  name="resourceType"
+                  value={option.value}
+                  checked={newResourceType === option.value}
+                  onChange={(e) => setNewResourceType(e.target.value as ResourceType)}
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </div>
 
-            {locations.length > 0 && (
-              <s-choice-list
-                title="所属ロケーション（複数選択可）"
-                name="locations"
-                allowMultiple
-                choices={locations.map((loc) => ({
-                  label: loc.name,
-                  value: loc.id,
-                }))}
-                selected={selectedLocationIds}
-                onChange={(e: CustomEvent) => {
-                  setSelectedLocationIds(e.detail as string[]);
-                }}
-              />
-            )}
+        {locations.length > 0 && (
+          <div style={{ marginBottom: "16px" }}>
+            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
+              所属ロケーション（複数選択可）
+            </label>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {locations.map((loc) => (
+                <label key={loc.id} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    value={loc.id}
+                    checked={selectedLocationIds.includes(loc.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedLocationIds([...selectedLocationIds, loc.id]);
+                      } else {
+                        setSelectedLocationIds(selectedLocationIds.filter((id) => id !== loc.id));
+                      }
+                    }}
+                  />
+                  {loc.name}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
-            {locations.length === 0 && (
-              <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
-                <s-text tone="caution">
-                  ⚠️ ロケーションが未登録のため、スケジュールを設定できません。
-                  先にホーム画面からロケーションを同期してください。
-                </s-text>
-              </s-box>
-            )}
-          </s-stack>
+        {locations.length === 0 && (
+          <div style={{ padding: "12px", backgroundColor: "#FEF3C7", borderRadius: "6px", marginBottom: "16px" }}>
+            ⚠️ ロケーションが未登録のため、スケジュールを設定できません。先にホーム画面からロケーションを同期してください。
+          </div>
+        )}
 
-          <s-stack slot="footer" direction="inline" gap="base">
-            <s-button
-              variant="tertiary"
-              onClick={() => {
-                setShowCreateModal(false);
-                resetForm();
-              }}
-            >
-              キャンセル
-            </s-button>
-            <s-button
-              variant="primary"
-              onClick={handleCreate}
-              {...(isLoading ? { loading: true } : {})}
-            >
-              作成
-            </s-button>
-          </s-stack>
-        </s-modal>
-      )}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "24px" }}>
+          <button
+            type="button"
+            onClick={() => {
+              setShowCreateModal(false);
+              resetForm();
+            }}
+            style={{
+              padding: "8px 16px",
+              border: "1px solid #ccc",
+              borderRadius: "6px",
+              backgroundColor: "white",
+              cursor: "pointer",
+            }}
+          >
+            キャンセル
+          </button>
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={isLoading}
+            style={{
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: "6px",
+              backgroundColor: "#008060",
+              color: "white",
+              cursor: isLoading ? "not-allowed" : "pointer",
+              opacity: isLoading ? 0.6 : 1,
+            }}
+          >
+            {isLoading ? "作成中..." : "作成"}
+          </button>
+        </div>
+      </dialog>
 
       {/* 削除確認モーダル */}
-      {deleteTarget && (
-        <s-modal
-          heading="リソースの削除"
-          open={!!deleteTarget}
-          onClose={() => setDeleteTarget(null)}
-        >
-          <s-paragraph>
-            このリソースを削除しますか？
-            関連するスケジュールも全て削除されます。この操作は取り消せません。
-          </s-paragraph>
-
-          <s-stack slot="footer" direction="inline" gap="base">
-            <s-button variant="tertiary" onClick={() => setDeleteTarget(null)}>
-              キャンセル
-            </s-button>
-            <s-button
-              variant="primary"
-              tone="critical"
-              onClick={() => handleDelete(deleteTarget)}
-              {...(isLoading ? { loading: true } : {})}
-            >
-              削除
-            </s-button>
-          </s-stack>
-        </s-modal>
-      )}
+      <dialog
+        ref={deleteModalRef}
+        onClose={() => setDeleteTarget(null)}
+        style={{
+          border: "none",
+          borderRadius: "12px",
+          padding: "24px",
+          maxWidth: "400px",
+          width: "90%",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+        }}
+      >
+        <h2 style={{ margin: "0 0 16px 0", fontSize: "18px" }}>リソースの削除</h2>
+        <p style={{ margin: "0 0 24px 0", color: "#666" }}>
+          このリソースを削除しますか？
+          関連するスケジュールも全て削除されます。この操作は取り消せません。
+        </p>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+          <button
+            type="button"
+            onClick={() => setDeleteTarget(null)}
+            style={{
+              padding: "8px 16px",
+              border: "1px solid #ccc",
+              borderRadius: "6px",
+              backgroundColor: "white",
+              cursor: "pointer",
+            }}
+          >
+            キャンセル
+          </button>
+          <button
+            type="button"
+            onClick={() => deleteTarget && handleDelete(deleteTarget)}
+            disabled={isLoading}
+            style={{
+              padding: "8px 16px",
+              border: "none",
+              borderRadius: "6px",
+              backgroundColor: "#dc2626",
+              color: "white",
+              cursor: isLoading ? "not-allowed" : "pointer",
+              opacity: isLoading ? 0.6 : 1,
+            }}
+          >
+            {isLoading ? "削除中..." : "削除"}
+          </button>
+        </div>
+      </dialog>
     </s-page>
   );
 }

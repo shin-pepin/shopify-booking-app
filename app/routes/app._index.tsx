@@ -211,6 +211,7 @@ export default function Index() {
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Asia/Tokyo",
     });
   };
 
@@ -221,10 +222,10 @@ export default function Index() {
     return parts.length > 0 ? parts.join(", ") : "住所未設定";
   };
 
-  const getProgressBarColor = (percentage: number) => {
-    if (percentage >= 90) return "#EF4444";
-    if (percentage >= 70) return "#F59E0B";
-    return "#10B981";
+  const getProgressBarTone = (percentage: number): "success" | "critical" | "highlight" | "primary" => {
+    if (percentage >= 90) return "critical";
+    if (percentage >= 70) return "highlight";
+    return "success";
   };
 
   // オンボーディング状態の判定
@@ -234,6 +235,7 @@ export default function Index() {
     <s-page heading="予約システム管理">
       <s-button
         slot="primary-action"
+        variant="primary"
         onClick={syncLocations}
         {...(isSyncing ? { loading: true } : {})}
       >
@@ -247,41 +249,35 @@ export default function Index() {
             <s-stack direction="block" gap="base">
               <s-heading>予約受付開始までのステップ</s-heading>
               
-              <s-stack direction="block" gap="tight">
+              <s-stack direction="block" gap="base">
                 <s-stack direction="inline" gap="base">
                   <s-text>{locations.length > 0 ? "✅" : "⬜"}</s-text>
                   <s-text><strong>STEP 1: ロケーション（店舗）の同期</strong></s-text>
                 </s-stack>
                 {locations.length === 0 && (
-                  <s-text tone="subdued" style={{ marginLeft: "24px" }}>
-                    右上の「Shopifyから同期」ボタンを押してください。
-                  </s-text>
+                  <s-text>　→ 右上の「Shopifyから同期」ボタンを押してください。</s-text>
                 )}
               </s-stack>
 
-              <s-stack direction="block" gap="tight">
+              <s-stack direction="block" gap="base">
                 <s-stack direction="inline" gap="base">
                   <s-text>{resourceCount > 0 ? "✅" : "⬜"}</s-text>
                   <s-text><strong>STEP 2: リソース（スタッフ・部屋）の登録</strong></s-text>
                 </s-stack>
                 {resourceCount === 0 && (
-                  <s-text tone="subdued" style={{ marginLeft: "24px" }}>
-                    <s-link href="/app/resources">リソース管理</s-link>からスタッフや部屋を登録しましょう。
-                  </s-text>
+                  <s-text>　→ <s-link href="/app/resources">リソース管理</s-link>からスタッフや部屋を登録しましょう。</s-text>
                 )}
               </s-stack>
 
-              <s-stack direction="block" gap="tight">
+              <s-stack direction="block" gap="base">
                 <s-stack direction="inline" gap="base">
                   <s-text>⬜</s-text>
                   <s-text><strong>STEP 3: ストアへのカレンダー設置</strong></s-text>
                 </s-stack>
-                <s-text tone="subdued" style={{ marginLeft: "24px" }}>
-                  Shopifyのテーマエディタで商品ページにカレンダーを追加します。
-                </s-text>
+                <s-text>　→ Shopifyのテーマエディタで商品ページにカレンダーを追加します。</s-text>
               </s-stack>
 
-              <s-button url="/app/guide" variant="primary">
+              <s-button href="/app/guide" variant="primary">
                 詳しい使い方ガイドを見る
               </s-button>
             </s-stack>
@@ -314,36 +310,21 @@ export default function Index() {
 
             {/* プログレスバー */}
             {usage.usageLimit !== Infinity && (
-              <div style={{ width: "100%" }}>
-                <div
-                  style={{
-                    width: "100%",
-                    height: "8px",
-                    backgroundColor: "#E5E7EB",
-                    borderRadius: "4px",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${Math.min(usage.usagePercentage, 100)}%`,
-                      height: "100%",
-                      backgroundColor: getProgressBarColor(usage.usagePercentage),
-                      borderRadius: "4px",
-                      transition: "width 0.5s ease",
-                    }}
-                  />
-                </div>
-                <s-stack direction="inline" gap="base">
+              <s-box padding="none">
+                <s-progress-bar
+                  progress={Math.min(usage.usagePercentage, 100)}
+                  tone={getProgressBarTone(usage.usagePercentage)}
+                />
+                <s-stack direction="inline" gap="base" align="center">
                   <s-text>残り {usage.remaining} 件</s-text>
                   <s-text>({Math.round(usage.usagePercentage)}% 使用)</s-text>
                 </s-stack>
-              </div>
+              </s-box>
             )}
 
             {usage.isLimitReached && (
               <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
-                <s-text tone="critical">
+                <s-text>
                   ⚠️ 予約上限に達しました。新しい予約を受け付けるには、プランをアップグレードしてください。
                 </s-text>
               </s-box>

@@ -320,6 +320,7 @@ export default function ResourceDetailPage() {
     <s-page heading={resource.name}>
       <s-button
         slot="primary-action"
+        variant="primary"
         onClick={handleSaveSchedule}
         {...(isLoading ? { loading: true } : {})}
       >
@@ -354,7 +355,7 @@ export default function ResourceDetailPage() {
       <s-section heading="シフト設定">
         {locations.length === 0 ? (
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
-            <s-text tone="caution">
+            <s-text>
               ⚠️ ロケーションが未登録です。
               <s-link href="/app">ホーム</s-link>からロケーションを同期してください。
             </s-text>

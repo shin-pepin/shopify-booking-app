@@ -198,7 +198,7 @@ export default function SettingsPage() {
 
   return (
     <s-page heading="手付金設定">
-      <s-button slot="primary-action" onClick={() => setShowCreateModal(true)}>
+      <s-button slot="primary-action" variant="primary" onClick={() => setShowCreateModal(true)}>
         新規プラン作成
       </s-button>
 
@@ -210,7 +210,7 @@ export default function SettingsPage() {
         </s-paragraph>
 
         {sellingPlanGroups.length === 0 ? (
-          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>プランが登録されていません</s-heading>
               <s-paragraph>「新規プラン作成」ボタンから手付金プランを作成してください。</s-paragraph>
@@ -233,7 +233,7 @@ export default function SettingsPage() {
                       >
                         {selectedGroupId === group.id ? "閉じる" : "商品を追加"}
                       </s-button>
-                      <s-button variant="tertiary" tone="critical" onClick={() => handleDeletePlan(group.id)}>
+                      <s-button variant="tertiary" onClick={() => handleDeletePlan(group.id)}>
                         削除
                       </s-button>
                     </s-stack>

@@ -1,4 +1,3 @@
-import { useAppBridge } from "@shopify/app-bridge-react";
 import type { HeadersFunction } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 
@@ -26,15 +25,13 @@ export default function GuidePage() {
       <s-section heading="STEP 1: 店舗（ロケーション）の準備">
         <s-stack direction="block" gap="base">
           <s-box padding="base" borderWidth="base" borderRadius="base">
-            <s-stack direction="block" gap="tight">
+            <s-stack direction="block" gap="base">
               <s-stack direction="inline" gap="base">
                 <s-badge tone="info">必須</s-badge>
                 <s-text><strong>Shopifyのロケーションを同期する</strong></s-text>
               </s-stack>
               <s-paragraph>
-                <s-text tone="subdued">
-                  まずは予約を受け付ける「場所」をアプリに認識させる必要があります。
-                </s-text>
+                まずは予約を受け付ける「場所」をアプリに認識させる必要があります。
               </s-paragraph>
               <s-ordered-list>
                 <s-list-item>メニューの「ホーム」をクリックします。</s-list-item>
@@ -51,15 +48,13 @@ export default function GuidePage() {
       <s-section heading="STEP 2: スタッフや部屋の登録">
         <s-stack direction="block" gap="base">
           <s-box padding="base" borderWidth="base" borderRadius="base">
-            <s-stack direction="block" gap="tight">
+            <s-stack direction="block" gap="base">
               <s-stack direction="inline" gap="base">
                 <s-badge tone="info">必須</s-badge>
                 <s-text><strong>リソース（スタッフ・部屋）を作成する</strong></s-text>
               </s-stack>
               <s-paragraph>
-                <s-text tone="subdued">
-                  予約の対象となる「人（美容師など）」や「場所（会議室など）」を登録し、シフト（営業時間）を決めます。
-                </s-text>
+                予約の対象となる「人（美容師など）」や「場所（会議室など）」を登録し、シフト（営業時間）を決めます。
               </s-paragraph>
               <s-ordered-list>
                 <s-list-item>メニューの「リソース管理」をクリックします。</s-list-item>
@@ -76,15 +71,13 @@ export default function GuidePage() {
       <s-section heading="STEP 3: 予約カレンダーの表示">
         <s-stack direction="block" gap="base">
           <s-box padding="base" borderWidth="base" borderRadius="base">
-            <s-stack direction="block" gap="tight">
+            <s-stack direction="block" gap="base">
               <s-stack direction="inline" gap="base">
                 <s-badge tone="success">仕上げ</s-badge>
                 <s-text><strong>テーマエディタで設定する</strong></s-text>
               </s-stack>
               <s-paragraph>
-                <s-text tone="subdued">
-                  最後に、お客様が見る商品ページに予約カレンダーを表示させます。
-                </s-text>
+                最後に、お客様が見る商品ページに予約カレンダーを表示させます。
               </s-paragraph>
               <s-ordered-list>
                 <s-list-item>Shopify管理画面の「オンラインストア」＞「テーマ」＞「カスタマイズ」を開きます。</s-list-item>
@@ -102,21 +95,21 @@ export default function GuidePage() {
         <s-stack direction="block" gap="base">
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-stack direction="block" gap="tight">
+              <s-stack direction="block" gap="base">
                 <s-text><strong>💰 手付金を設定する</strong></s-text>
-                <s-text tone="subdued">
+                <s-text>
                   予約時に「20%だけ前払い」のような設定が可能です。「手付金設定」メニューからプランを作成し、商品に追加してください。
                 </s-text>
               </s-stack>
-              <s-stack direction="block" gap="tight">
+              <s-stack direction="block" gap="base">
                 <s-text><strong>💬 LINEで通知を送る（Proプラン以上）</strong></s-text>
-                <s-text tone="subdued">
+                <s-text>
                   予約が入った時に自動でお客様にLINEを送れます。「LINE連携」メニューから設定できます。
                 </s-text>
               </s-stack>
-              <s-stack direction="block" gap="tight">
+              <s-stack direction="block" gap="base">
                 <s-text><strong>🏢 複数店舗を管理する（Maxプラン）</strong></s-text>
-                <s-text tone="subdued">
+                <s-text>
                   支店が増えても大丈夫。「多店舗管理」メニューで、全店舗の予約を一括管理できます。
                 </s-text>
               </s-stack>
@@ -130,7 +123,7 @@ export default function GuidePage() {
           <s-paragraph>
             設定でご不明な点がありましたら、サポートまでお問い合わせください。
           </s-paragraph>
-          <s-button variant="plain">お問い合わせフォーム</s-button>
+          <s-button variant="tertiary">お問い合わせフォーム</s-button>
         </s-stack>
       </s-section>
     </s-page>
@@ -140,4 +133,3 @@ export default function GuidePage() {
 export const headers: HeadersFunction = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
-

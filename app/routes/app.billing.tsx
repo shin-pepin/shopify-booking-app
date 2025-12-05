@@ -125,6 +125,12 @@ export default function BillingPage() {
     fetcher.submit({ planKey }, { method: "POST" });
   };
 
+  const getProgressBarTone = (percentage: number): "success" | "critical" | "highlight" | "primary" => {
+    if (percentage >= 90) return "critical";
+    if (percentage >= 70) return "highlight";
+    return "success";
+  };
+
   const getPlanBadgeTone = (planKey: string): "info" | "success" | "warning" | "critical" => {
     switch (planKey) {
       case "FREE":
@@ -155,27 +161,12 @@ export default function BillingPage() {
               </s-badge>
             </s-stack>
             {usage.usageLimit !== Infinity && (
-              <div style={{ width: "100%" }}>
-                <div
-                  style={{
-                    width: "100%",
-                    height: "8px",
-                    backgroundColor: "#E5E7EB",
-                    borderRadius: "4px",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${Math.min(usage.usagePercentage, 100)}%`,
-                      height: "100%",
-                      backgroundColor: usage.usagePercentage >= 90 ? "#EF4444" : usage.usagePercentage >= 70 ? "#F59E0B" : "#10B981",
-                      borderRadius: "4px",
-                      transition: "width 0.5s ease",
-                    }}
-                  />
-                </div>
-              </div>
+              <s-box padding="none">
+                <s-progress-bar
+                  progress={Math.min(usage.usagePercentage, 100)}
+                  tone={getProgressBarTone(usage.usagePercentage)}
+                />
+              </s-box>
             )}
           </s-stack>
         </s-box>

@@ -272,7 +272,7 @@ export default function OrganizationStaffPage() {
     return (
       <s-page heading="スタッフ管理">
         <s-section>
-          <s-box padding="loose" borderWidth="base" borderRadius="base" background="subdued">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>{!canUse ? "Maxプラン専用機能" : "組織を作成してください"}</s-heading>
               <s-paragraph>
@@ -468,7 +468,7 @@ export default function OrganizationStaffPage() {
                       編集
                     </s-button>
                     {member.role !== "OWNER" && (
-                      <s-button variant="tertiary" tone="critical" onClick={() => handleRemove(member.id)}>
+                      <s-button variant="tertiary" onClick={() => handleRemove(member.id)}>
                         削除
                       </s-button>
                     )}
