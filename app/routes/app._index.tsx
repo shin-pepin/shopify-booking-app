@@ -195,7 +195,7 @@ export default function Index() {
 
   useEffect(() => {
     if (fetcher.data?.success) {
-      shopify.toast.show(`${fetcher.data.syncedCount}件のロケーションを同期しました`);
+      shopify.toast.show(`${fetcher.data.syncedCount}件の店舗を読み込みました！`);
     }
   }, [fetcher.data, shopify]);
 
@@ -204,7 +204,7 @@ export default function Index() {
   };
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "未同期";
+    if (!dateString) return "まだ読み込んでいません";
     return new Date(dateString).toLocaleString("ja-JP", {
       year: "numeric",
       month: "2-digit",
@@ -219,7 +219,7 @@ export default function Index() {
     const parts = [location.city, location.province, location.country].filter(
       Boolean
     );
-    return parts.length > 0 ? parts.join(", ") : "住所未設定";
+    return parts.length > 0 ? parts.join(", ") : "住所は未登録です";
   };
 
   const getProgressBarTone = (percentage: number): "success" | "critical" | "highlight" | "primary" => {
@@ -232,53 +232,74 @@ export default function Index() {
   const isOnboardingComplete = locations.length > 0 && resourceCount > 0;
 
   return (
-    <s-page heading="予約システム管理">
+    <s-page heading="ホーム">
       <s-button
         slot="primary-action"
         variant="primary"
         onClick={syncLocations}
         {...(isSyncing ? { loading: true } : {})}
       >
-        Shopifyから同期
+        ロケーションを読み込む
       </s-button>
 
       {/* オンボーディング（未完了の場合のみ表示） */}
       {!isOnboardingComplete && (
-        <s-section heading="セットアップを始めましょう">
+        <s-section heading="🎉 はじめに設定しましょう">
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-heading>予約受付開始までのステップ</s-heading>
+              <s-heading>あと少しで予約を受け付けられます！</s-heading>
+              <s-paragraph>
+                かんたん3ステップで、お客様からの予約を受け付けられるようになります。
+                むずかしい作業は何もありません。順番に進めてみましょう！
+              </s-paragraph>
               
               <s-stack direction="block" gap="base">
-                <s-stack direction="inline" gap="base">
-                  <s-text>{locations.length > 0 ? "✅" : "⬜"}</s-text>
-                  <s-text><strong>STEP 1: ロケーション（店舗）の同期</strong></s-text>
-                </s-stack>
-                {locations.length === 0 && (
-                  <s-text>　→ 右上の「Shopifyから同期」ボタンを押してください。</s-text>
-                )}
-              </s-stack>
+                <s-box padding="base" borderWidth="base" borderRadius="base" background={locations.length > 0 ? "subdued" : "transparent"}>
+                  <s-stack direction="inline" gap="base">
+                    <s-text>{locations.length > 0 ? "✅" : "1️⃣"}</s-text>
+                    <s-stack direction="block" gap="base">
+                      <s-text><strong>店舗情報を読み込む</strong></s-text>
+                      {locations.length === 0 && (
+                        <s-text>👆 右上の「店舗情報を読み込む」ボタンを押してください</s-text>
+                      )}
+                      {locations.length > 0 && (
+                        <s-text>できました！{locations.length}件の店舗を読み込みました</s-text>
+                      )}
+                    </s-stack>
+                  </s-stack>
+                </s-box>
 
-              <s-stack direction="block" gap="base">
-                <s-stack direction="inline" gap="base">
-                  <s-text>{resourceCount > 0 ? "✅" : "⬜"}</s-text>
-                  <s-text><strong>STEP 2: リソース（スタッフ・部屋）の登録</strong></s-text>
-                </s-stack>
-                {resourceCount === 0 && (
-                  <s-text>　→ <s-link href="/app/resources">リソース管理</s-link>からスタッフや部屋を登録しましょう。</s-text>
-                )}
-              </s-stack>
+                <s-box padding="base" borderWidth="base" borderRadius="base" background={resourceCount > 0 ? "subdued" : "transparent"}>
+                  <s-stack direction="inline" gap="base">
+                    <s-text>{resourceCount > 0 ? "✅" : "2️⃣"}</s-text>
+                    <s-stack direction="block" gap="base">
+                      <s-text><strong>予約を受ける人・場所を登録</strong></s-text>
+                      {resourceCount === 0 ? (
+                        <s-text>
+                          予約を受けたい美容師さんや部屋を登録しましょう
+                          <br />
+                          <s-link href="/app/resources">👉 登録ページへ</s-link>
+                        </s-text>
+                      ) : (
+                        <s-text>できました！{resourceCount}件登録されています</s-text>
+                      )}
+                    </s-stack>
+                  </s-stack>
+                </s-box>
 
-              <s-stack direction="block" gap="base">
-                <s-stack direction="inline" gap="base">
-                  <s-text>⬜</s-text>
-                  <s-text><strong>STEP 3: ストアへのカレンダー設置</strong></s-text>
-                </s-stack>
-                <s-text>　→ Shopifyのテーマエディタで商品ページにカレンダーを追加します。</s-text>
+                <s-box padding="base" borderWidth="base" borderRadius="base" background="transparent">
+                  <s-stack direction="inline" gap="base">
+                    <s-text>3️⃣</s-text>
+                    <s-stack direction="block" gap="base">
+                      <s-text><strong>予約カレンダーをお店のページに設置</strong></s-text>
+                      <s-text>使い方ガイドでわかりやすく説明しています</s-text>
+                    </s-stack>
+                  </s-stack>
+                </s-box>
               </s-stack>
 
               <s-button href="/app/guide" variant="primary">
-                詳しい使い方ガイドを見る
+                使い方ガイドを見る
               </s-button>
             </s-stack>
           </s-box>
@@ -286,25 +307,25 @@ export default function Index() {
       )}
 
       {/* 使用量セクション */}
-      <s-section heading="今月の予約状況">
+      <s-section heading="📊 今月の予約">
         <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
           <s-stack direction="block" gap="base">
             <s-stack direction="inline" gap="base">
               <s-stack direction="block" gap="base">
                 <s-stack direction="inline" gap="base">
                   <s-heading>
-                    {usage.currentUsage} / {usage.usageLimit === Infinity ? "∞" : usage.usageLimit}
+                    {usage.currentUsage} / {usage.usageLimit === Infinity ? "無制限" : usage.usageLimit}件
                   </s-heading>
                   <s-badge tone={usage.isLimitReached ? "critical" : "info"}>
                     {usage.planName}プラン
                   </s-badge>
                 </s-stack>
                 <s-text>
-                  予約件数 | 次回リセット: {formatDate(usage.cycleEnd)}
+                  今月受け付けた予約の数です ｜ {formatDate(usage.cycleEnd)}にリセットされます
                 </s-text>
               </s-stack>
               {usage.isLimitReached && (
-                <s-button variant="primary">プランをアップグレード</s-button>
+                <s-button variant="primary" href="/app/billing">プランを変更する</s-button>
               )}
             </s-stack>
 
@@ -316,8 +337,12 @@ export default function Index() {
                   tone={getProgressBarTone(usage.usagePercentage)}
                 />
                 <s-stack direction="inline" gap="base" align="center">
-                  <s-text>残り {usage.remaining} 件</s-text>
-                  <s-text>({Math.round(usage.usagePercentage)}% 使用)</s-text>
+                  <s-text>
+                    {usage.remaining > 0 
+                      ? `あと${usage.remaining}件まで受付できます`
+                      : "今月の上限に達しました"}
+                  </s-text>
+                  <s-text>（{Math.round(usage.usagePercentage)}%使用）</s-text>
                 </s-stack>
               </s-box>
             )}
@@ -325,7 +350,10 @@ export default function Index() {
             {usage.isLimitReached && (
               <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
                 <s-text>
-                  ⚠️ 予約上限に達しました。新しい予約を受け付けるには、プランをアップグレードしてください。
+                  ⚠️ 今月の予約受付が上限に達しました。
+                  <br />
+                  新しい予約を受け付けるには、プランの変更をご検討ください。
+                  すでに入っている予約には影響ありませんのでご安心ください。
                 </s-text>
               </s-box>
             )}
@@ -333,14 +361,14 @@ export default function Index() {
         </s-box>
       </s-section>
 
-      {/* ヘッダーセクション */}
-      <s-section heading="店舗ロケーション">
+      {/* 店舗セクション */}
+      <s-section heading="🏪 登録済みの店舗">
         <s-paragraph>
-          Shopifyに登録されている店舗ロケーションを管理します。
+          予約を受け付ける店舗の一覧です。
           {lastSyncedAt && (
             <>
               <br />
-              最終同期: {formatDate(lastSyncedAt)}
+              <s-text>（最終更新: {formatDate(lastSyncedAt)}）</s-text>
             </>
           )}
         </s-paragraph>
@@ -349,10 +377,16 @@ export default function Index() {
         {locations.length === 0 ? (
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-heading>ロケーションが見つかりません</s-heading>
+              <s-heading>まだ店舗が登録されていません</s-heading>
               <s-paragraph>
-                「Shopifyから同期」ボタンをクリックして、
-                Shopifyに登録されているロケーションを取得してください。
+                右上の「🔄 ロケーションを読み込む」ボタンを押して、
+                Shopifyに登録している店舗情報を取り込んでください。
+              </s-paragraph>
+              <s-paragraph>
+                <s-text>
+                  ※ Shopify管理画面の「設定」→「ロケーション」に
+                  店舗が登録されている必要があります
+                </s-text>
               </s-paragraph>
             </s-stack>
           </s-box>
@@ -371,12 +405,12 @@ export default function Index() {
                     <s-stack direction="inline" gap="base">
                       <s-heading>{location.name}</s-heading>
                       {location.isActive ? (
-                        <s-badge tone="success">有効</s-badge>
+                        <s-badge tone="success">受付OK</s-badge>
                       ) : (
-                        <s-badge tone="critical">無効</s-badge>
+                        <s-badge tone="critical">受付停止中</s-badge>
                       )}
                     </s-stack>
-                    <s-text>{formatAddress(location)}</s-text>
+                    <s-text>📍 {formatAddress(location)}</s-text>
                     {location.address1 && <s-text>{location.address1}</s-text>}
                   </s-stack>
                 </s-stack>
@@ -387,41 +421,44 @@ export default function Index() {
       </s-section>
 
       {/* サイドバー: プラン情報 */}
-      <s-section slot="aside" heading="現在のプラン">
+      <s-section slot="aside" heading="💎 ご利用中のプラン">
         <s-stack direction="block" gap="base">
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>{usage.planName}</s-heading>
               <s-text>
                 {usage.usageLimit === Infinity
-                  ? "無制限の予約"
-                  : `${usage.usageLimit}件/月`}
+                  ? "予約数の上限なし！"
+                  : `毎月${usage.usageLimit}件まで受付OK`}
               </s-text>
             </s-stack>
           </s-box>
           <s-stack direction="block" gap="base">
-            <s-text><strong>プラン一覧</strong></s-text>
-            <s-text>Free: 10件/月 ($0)</s-text>
-            <s-text>Standard: 50件/月 ($29)</s-text>
-            <s-text>Pro: 300件/月 ($49) + LINE</s-text>
-            <s-text>Max: 無制限 ($120) + 多店舗</s-text>
+            <s-text><strong>プランの比較</strong></s-text>
+            <s-text>🆓 Free: 月10件まで・無料</s-text>
+            <s-text>⭐ Standard: 月50件・$29</s-text>
+            <s-text>🚀 Pro: 月300件・$49・LINE通知付き</s-text>
+            <s-text>👑 Max: 無制限・$120・複数店舗対応</s-text>
           </s-stack>
+          <s-button variant="tertiary" href="/app/billing">
+            プランを詳しく見る →
+          </s-button>
         </s-stack>
       </s-section>
 
-      <s-section slot="aside" heading="統計">
+      <s-section slot="aside" heading="📈 かんたん統計">
         <s-stack direction="block" gap="base">
           <s-stack direction="inline" gap="base">
-            <s-text>登録ロケーション数:</s-text>
-            <s-text><strong>{locations.length}</strong></s-text>
+            <s-text>登録店舗:</s-text>
+            <s-text><strong>{locations.length}件</strong></s-text>
           </s-stack>
           <s-stack direction="inline" gap="base">
-            <s-text>有効なロケーション:</s-text>
-            <s-text><strong>{locations.filter((l) => l.isActive).length}</strong></s-text>
+            <s-text>受付中:</s-text>
+            <s-text><strong>{locations.filter((l) => l.isActive).length}件</strong></s-text>
           </s-stack>
           <s-stack direction="inline" gap="base">
-            <s-text>登録リソース数:</s-text>
-            <s-text><strong>{resourceCount}</strong></s-text>
+            <s-text>スタッフ・部屋:</s-text>
+            <s-text><strong>{resourceCount}件</strong></s-text>
           </s-stack>
         </s-stack>
       </s-section>

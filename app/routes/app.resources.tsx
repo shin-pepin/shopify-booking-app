@@ -189,12 +189,12 @@ export default function ResourcesPage() {
   useEffect(() => {
     if (fetcher.data?.success) {
       if (fetcher.data.action === "created") {
-        shopify.toast.show("リソースを作成しました");
+        shopify.toast.show("登録しました！");
         setShowCreateModal(false);
         resetForm();
         // 作成後は同じページに留まり、リストが自動更新される
       } else if (fetcher.data.action === "deleted") {
-        shopify.toast.show("リソースを削除しました");
+        shopify.toast.show("削除しました");
         setDeleteTarget(null);
       }
     } else if (fetcher.data?.error) {
@@ -243,6 +243,19 @@ export default function ResourcesPage() {
     }
   };
 
+  const getTypeIcon = (type: ResourceType) => {
+    switch (type) {
+      case "STAFF":
+        return "👤";
+      case "ROOM":
+        return "🚪";
+      case "EQUIPMENT":
+        return "🔧";
+      default:
+        return "📦";
+    }
+  };
+
   const getTypeBadgeTone = (type: ResourceType): "info" | "success" | "warning" => {
     switch (type) {
       case "STAFF":
@@ -257,14 +270,13 @@ export default function ResourcesPage() {
   };
 
   return (
-    <s-page heading="リソース管理">
+    <s-page heading="スタッフ・部屋の管理">
       <s-section>
-        <s-stack direction="inline" gap="base" align="center">
-          <s-heading>リソース管理</s-heading>
+        <s-stack direction="inline" gap="base">
+          <s-heading>予約を受ける人・場所</s-heading>
           <button
             type="button"
             onClick={() => {
-              console.log("新規作成ボタンがクリックされました");
               setShowCreateModal(true);
             }}
             style={{
@@ -272,29 +284,41 @@ export default function ResourcesPage() {
               color: "white",
               border: "none",
               borderRadius: "8px",
-              padding: "8px 16px",
+              padding: "10px 20px",
               fontSize: "14px",
-              fontWeight: "500",
+              fontWeight: "600",
               cursor: "pointer",
+              marginLeft: "auto",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px"
             }}
           >
-            新規作成
+            ＋ 新しく追加
           </button>
         </s-stack>
       </s-section>
 
       {/* メインセクション: リソース一覧 */}
-      <s-section heading="登録済みリソース">
+      <s-section heading="📋 登録済みの一覧">
         <s-paragraph>
-          スタッフや部屋などの予約リソースを管理します。
-          各リソースをクリックしてシフトを設定できます。
+          予約を受け付けるスタッフや部屋を登録してください。
+          <br />
+          名前をクリックすると、出勤日や営業時間を設定できます。
         </s-paragraph>
 
         {resources.length === 0 ? (
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-heading>リソースが登録されていません</s-heading>
-              <s-paragraph>「新規作成」ボタンからスタッフや部屋を登録してください。</s-paragraph>
+              <s-heading>まだ誰も登録されていません</s-heading>
+              <s-paragraph>
+                「＋ 新しく追加」ボタンから、予約を受け付けたいスタッフや部屋を登録しましょう！
+              </s-paragraph>
+              <s-paragraph>
+                <s-text>
+                  💡 ヒント: 美容師さん一人ひとりの名前や、部屋Aなどの名前で登録してください。
+                </s-text>
+              </s-paragraph>
             </s-stack>
           </s-box>
         ) : (
@@ -310,33 +334,33 @@ export default function ResourcesPage() {
                 <s-stack direction="inline" gap="base">
                   <s-stack direction="block" gap="base">
                     <s-stack direction="inline" gap="base">
-                      <s-heading>{resource.name}</s-heading>
+                      <s-heading>{getTypeIcon(resource.type)} {resource.name}</s-heading>
                       <s-badge tone={getTypeBadgeTone(resource.type)}>
                         {getTypeLabel(resource.type)}
                       </s-badge>
                     </s-stack>
                     <s-text>
-                      スケジュール: {resource._count.schedules}件 / 予約: {resource._count.bookings}件
+                      📅 シフト: {resource._count.schedules > 0 ? `${resource._count.schedules}件設定済み` : "未設定"} 
+                      　|　 
+                      📊 予約実績: {resource._count.bookings}件
                     </s-text>
                   </s-stack>
                   <s-stack direction="inline" gap="base">
                     <s-button
-                      variant="tertiary"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
+                      variant="primary"
+                      onClick={() => {
                         navigate(`/app/resources/${resource.id}`);
                       }}
                     >
-                      編集
+                      シフトを設定
                     </s-button>
                     <s-button
                       variant="tertiary"
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
+                      onClick={() => {
                         setDeleteTarget(resource.id);
                       }}
                     >
-                      削除
+                      🗑️
                     </s-button>
                   </s-stack>
                 </s-stack>
@@ -347,42 +371,52 @@ export default function ResourcesPage() {
       </s-section>
 
       {/* サイドバー: 統計情報 */}
-      <s-section slot="aside" heading="統計">
+      <s-section slot="aside" heading="📊 登録数の内訳">
         <s-stack direction="block" gap="base">
           <s-stack direction="inline" gap="base">
-            <s-text>総リソース数:</s-text>
-            <s-text><strong>{resources.length}</strong></s-text>
+            <s-text>合計:</s-text>
+            <s-text><strong>{resources.length}件</strong></s-text>
           </s-stack>
           <s-stack direction="inline" gap="base">
-            <s-text>スタッフ:</s-text>
-            <s-text><strong>{resources.filter((r) => r.type === "STAFF").length}</strong></s-text>
+            <s-text>👤 スタッフ:</s-text>
+            <s-text><strong>{resources.filter((r) => r.type === "STAFF").length}人</strong></s-text>
           </s-stack>
           <s-stack direction="inline" gap="base">
-            <s-text>部屋:</s-text>
-            <s-text><strong>{resources.filter((r) => r.type === "ROOM").length}</strong></s-text>
+            <s-text>🚪 部屋:</s-text>
+            <s-text><strong>{resources.filter((r) => r.type === "ROOM").length}室</strong></s-text>
           </s-stack>
           <s-stack direction="inline" gap="base">
-            <s-text>機材:</s-text>
-            <s-text><strong>{resources.filter((r) => r.type === "EQUIPMENT").length}</strong></s-text>
+            <s-text>🔧 機材:</s-text>
+            <s-text><strong>{resources.filter((r) => r.type === "EQUIPMENT").length}台</strong></s-text>
           </s-stack>
         </s-stack>
       </s-section>
 
-      <s-section slot="aside" heading="ロケーション">
+      <s-section slot="aside" heading="🏪 店舗">
         {locations.length === 0 ? (
           <s-paragraph>
             <s-text>
-              ロケーションが未登録です。
-              <s-link href="/app">ホーム</s-link>から同期してください。
+              店舗情報がまだ読み込まれていません。
+              <br />
+              <s-link href="/app">ホーム</s-link>から読み込んでください。
             </s-text>
           </s-paragraph>
         ) : (
           <s-stack direction="block" gap="base">
             {locations.map((loc) => (
-              <s-text key={loc.id}>{loc.name}</s-text>
+              <s-text key={loc.id}>📍 {loc.name}</s-text>
             ))}
           </s-stack>
         )}
+      </s-section>
+
+      <s-section slot="aside" heading="💡 ヒント">
+        <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+          <s-text>
+            シフト設定では、曜日ごとの出勤時間を登録できます。
+            休みの日はチェックを外してください。
+          </s-text>
+        </s-box>
       </s-section>
 
       {/* 新規作成モーダル */}
@@ -394,67 +428,93 @@ export default function ResourcesPage() {
         }}
         style={{
           border: "none",
-          borderRadius: "12px",
-          padding: "24px",
-          maxWidth: "500px",
+          borderRadius: "16px",
+          padding: "28px",
+          maxWidth: "480px",
           width: "90%",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
         }}
       >
-        <h2 style={{ margin: "0 0 16px 0", fontSize: "18px" }}>新規リソース作成</h2>
+        <h2 style={{ margin: "0 0 8px 0", fontSize: "20px", fontWeight: "600" }}>✨ 新しく追加する</h2>
+        <p style={{ margin: "0 0 20px 0", color: "#666", fontSize: "14px" }}>
+          予約を受け付けるスタッフや部屋を登録します
+        </p>
         
-        <div style={{ marginBottom: "16px" }}>
-          <label style={{ display: "block", marginBottom: "4px", fontWeight: "500" }}>
-            リソース名
+        <div style={{ marginBottom: "20px" }}>
+          <label style={{ display: "block", marginBottom: "6px", fontWeight: "600", fontSize: "14px" }}>
+            名前 <span style={{ color: "#dc2626" }}>*</span>
           </label>
           <input
             type="text"
             value={newResourceName}
             onChange={(e) => setNewResourceName(e.target.value)}
-            placeholder="例: 佐藤太郎、会議室A"
+            placeholder="例: 田中さん、部屋A"
             style={{
               width: "100%",
-              padding: "8px 12px",
-              border: "1px solid #ccc",
-              borderRadius: "6px",
-              fontSize: "14px",
+              padding: "12px 14px",
+              border: "1px solid #ddd",
+              borderRadius: "8px",
+              fontSize: "15px",
               boxSizing: "border-box",
+              transition: "border-color 0.2s",
             }}
           />
+          <p style={{ margin: "6px 0 0 0", color: "#888", fontSize: "13px" }}>
+            お客様に表示される名前です
+          </p>
         </div>
 
-        <div style={{ marginBottom: "16px" }}>
-          <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
-            リソースタイプ
+        <div style={{ marginBottom: "20px" }}>
+          <label style={{ display: "block", marginBottom: "10px", fontWeight: "600", fontSize: "14px" }}>
+            種類を選んでください <span style={{ color: "#dc2626" }}>*</span>
           </label>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {[
-              { label: "スタッフ（美容師、セラピストなど）", value: "STAFF" },
-              { label: "部屋（会議室、施術室など）", value: "ROOM" },
-              { label: "機材（プロジェクター、カメラなど）", value: "EQUIPMENT" },
+              { label: "👤 スタッフ", desc: "美容師さん、セラピストさんなど", value: "STAFF" },
+              { label: "🚪 部屋・席", desc: "カット台、個室、ベッドなど", value: "ROOM" },
+              { label: "🔧 機材", desc: "特殊機器、レンタル品など", value: "EQUIPMENT" },
             ].map((option) => (
-              <label key={option.value} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+              <label 
+                key={option.value} 
+                style={{ 
+                  display: "flex", 
+                  alignItems: "flex-start", 
+                  gap: "10px", 
+                  cursor: "pointer",
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: newResourceType === option.value ? "2px solid #008060" : "1px solid #ddd",
+                  backgroundColor: newResourceType === option.value ? "#f0fdf4" : "white",
+                }}
+              >
                 <input
                   type="radio"
                   name="resourceType"
                   value={option.value}
                   checked={newResourceType === option.value}
                   onChange={(e) => setNewResourceType(e.target.value as ResourceType)}
+                  style={{ marginTop: "2px" }}
                 />
-                {option.label}
+                <div>
+                  <div style={{ fontWeight: "500" }}>{option.label}</div>
+                  <div style={{ fontSize: "13px", color: "#666" }}>{option.desc}</div>
+                </div>
               </label>
             ))}
           </div>
         </div>
 
         {locations.length > 0 && (
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
-              所属ロケーション（複数選択可）
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "10px", fontWeight: "600", fontSize: "14px" }}>
+              どの店舗で働きますか？
             </label>
+            <p style={{ margin: "0 0 10px 0", color: "#666", fontSize: "13px" }}>
+              選んだ店舗に、月〜金の初期シフトが自動で設定されます
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {locations.map((loc) => (
-                <label key={loc.id} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                <label key={loc.id} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
                   <input
                     type="checkbox"
                     value={loc.id}
@@ -467,7 +527,7 @@ export default function ResourcesPage() {
                       }
                     }}
                   />
-                  {loc.name}
+                  📍 {loc.name}
                 </label>
               ))}
             </div>
@@ -475,12 +535,16 @@ export default function ResourcesPage() {
         )}
 
         {locations.length === 0 && (
-          <div style={{ padding: "12px", backgroundColor: "#FEF3C7", borderRadius: "6px", marginBottom: "16px" }}>
-            ⚠️ ロケーションが未登録のため、スケジュールを設定できません。先にホーム画面からロケーションを同期してください。
+          <div style={{ padding: "14px", backgroundColor: "#FEF3C7", borderRadius: "8px", marginBottom: "20px" }}>
+            <p style={{ margin: 0, fontSize: "14px" }}>
+              ⚠️ 店舗情報がまだ読み込まれていません。
+              <br />
+              先にホーム画面から店舗情報を読み込んでください。
+            </p>
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "24px" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "28px", paddingTop: "20px", borderTop: "1px solid #eee" }}>
           <button
             type="button"
             onClick={() => {
@@ -488,11 +552,13 @@ export default function ResourcesPage() {
               resetForm();
             }}
             style={{
-              padding: "8px 16px",
-              border: "1px solid #ccc",
-              borderRadius: "6px",
+              padding: "10px 20px",
+              border: "1px solid #ddd",
+              borderRadius: "8px",
               backgroundColor: "white",
               cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "500",
             }}
           >
             キャンセル
@@ -502,16 +568,18 @@ export default function ResourcesPage() {
             onClick={handleCreate}
             disabled={isLoading}
             style={{
-              padding: "8px 16px",
+              padding: "10px 24px",
               border: "none",
-              borderRadius: "6px",
+              borderRadius: "8px",
               backgroundColor: "#008060",
               color: "white",
               cursor: isLoading ? "not-allowed" : "pointer",
               opacity: isLoading ? 0.6 : 1,
+              fontSize: "14px",
+              fontWeight: "600",
             }}
           >
-            {isLoading ? "作成中..." : "作成"}
+            {isLoading ? "登録中..." : "✓ 登録する"}
           </button>
         </div>
       </dialog>
@@ -522,47 +590,55 @@ export default function ResourcesPage() {
         onClose={() => setDeleteTarget(null)}
         style={{
           border: "none",
-          borderRadius: "12px",
-          padding: "24px",
+          borderRadius: "16px",
+          padding: "28px",
           maxWidth: "400px",
           width: "90%",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+          boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
         }}
       >
-        <h2 style={{ margin: "0 0 16px 0", fontSize: "18px" }}>リソースの削除</h2>
-        <p style={{ margin: "0 0 24px 0", color: "#666" }}>
-          このリソースを削除しますか？
-          関連するスケジュールも全て削除されます。この操作は取り消せません。
+        <h2 style={{ margin: "0 0 16px 0", fontSize: "20px", fontWeight: "600" }}>🗑️ 削除の確認</h2>
+        <p style={{ margin: "0 0 8px 0", color: "#333", fontSize: "15px" }}>
+          本当に削除しますか？
         </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+        <p style={{ margin: "0 0 24px 0", color: "#666", fontSize: "14px" }}>
+          ※ 設定済みのシフトも一緒に削除されます。
+          <br />
+          　 この操作は元に戻せません。
+        </p>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
           <button
             type="button"
             onClick={() => setDeleteTarget(null)}
             style={{
-              padding: "8px 16px",
-              border: "1px solid #ccc",
-              borderRadius: "6px",
+              padding: "10px 20px",
+              border: "1px solid #ddd",
+              borderRadius: "8px",
               backgroundColor: "white",
               cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "500",
             }}
           >
-            キャンセル
+            やめる
           </button>
           <button
             type="button"
             onClick={() => deleteTarget && handleDelete(deleteTarget)}
             disabled={isLoading}
             style={{
-              padding: "8px 16px",
+              padding: "10px 20px",
               border: "none",
-              borderRadius: "6px",
+              borderRadius: "8px",
               backgroundColor: "#dc2626",
               color: "white",
               cursor: isLoading ? "not-allowed" : "pointer",
               opacity: isLoading ? 0.6 : 1,
+              fontSize: "14px",
+              fontWeight: "600",
             }}
           >
-            {isLoading ? "削除中..." : "削除"}
+            {isLoading ? "削除中..." : "削除する"}
           </button>
         </div>
       </dialog>

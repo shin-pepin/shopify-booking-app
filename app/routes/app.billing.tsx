@@ -131,33 +131,48 @@ export default function BillingPage() {
     return "success";
   };
 
-  const getPlanBadgeTone = (planKey: string): "info" | "success" | "warning" | "critical" => {
+  const getPlanIcon = (planKey: string): string => {
     switch (planKey) {
       case "FREE":
-        return "info";
+        return "🆓";
       case "STANDARD":
-        return "success";
+        return "⭐";
       case "PRO":
-        return "warning";
+        return "🚀";
       case "MAX":
-        return "critical";
+        return "👑";
       default:
-        return "info";
+        return "📦";
+    }
+  };
+
+  const getPlanColor = (planKey: string): string => {
+    switch (planKey) {
+      case "FREE":
+        return "#6b7280";
+      case "STANDARD":
+        return "#059669";
+      case "PRO":
+        return "#8b5cf6";
+      case "MAX":
+        return "#f59e0b";
+      default:
+        return "#6b7280";
     }
   };
 
   return (
-    <s-page heading="料金プラン">
+    <s-page heading="プラン・料金">
       {/* 現在の使用状況 */}
-      <s-section heading="現在の使用状況">
+      <s-section heading="📊 今月のご利用状況">
         <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
           <s-stack direction="block" gap="base">
             <s-stack direction="inline" gap="base">
               <s-heading>
-                {usage.currentUsage} / {usage.usageLimit === Infinity ? "∞" : usage.usageLimit}
+                {usage.currentUsage} / {usage.usageLimit === Infinity ? "無制限" : usage.usageLimit}件
               </s-heading>
               <s-badge tone={usage.isLimitReached ? "critical" : "success"}>
-                {usage.planName}プラン
+                {usage.planName}プラン利用中
               </s-badge>
             </s-stack>
             {usage.usageLimit !== Infinity && (
@@ -166,14 +181,27 @@ export default function BillingPage() {
                   progress={Math.min(usage.usagePercentage, 100)}
                   tone={getProgressBarTone(usage.usagePercentage)}
                 />
+                <s-text>
+                  {usage.usageLimit - usage.currentUsage > 0
+                    ? `あと${usage.usageLimit - usage.currentUsage}件の予約を受け付けられます`
+                    : "今月の上限に達しました"}
+                </s-text>
               </s-box>
+            )}
+            {usage.usageLimit === Infinity && (
+              <s-text>✨ 無制限プランなので、予約数に上限がありません！</s-text>
             )}
           </s-stack>
         </s-box>
       </s-section>
 
       {/* プラン一覧 */}
-      <s-section heading="プラン選択">
+      <s-section heading="🎯 あなたに合ったプランを選びましょう">
+        <s-paragraph>
+          お店の規模や必要な機能に合わせて、最適なプランをお選びください。
+          いつでも変更できます。
+        </s-paragraph>
+
         <s-stack direction="block" gap="base">
           {plans.map((plan) => (
             <s-box
@@ -186,29 +214,30 @@ export default function BillingPage() {
               <s-stack direction="inline" gap="base">
                 <s-stack direction="block" gap="base">
                   <s-stack direction="inline" gap="base">
-                    <s-heading>{plan.name}</s-heading>
-                    <s-badge tone={getPlanBadgeTone(plan.key)}>
-                      {plan.usageLimit === Infinity ? "無制限" : `${plan.usageLimit}件/月`}
+                    <s-heading>{getPlanIcon(plan.key)} {plan.name}</s-heading>
+                    <s-badge tone={plan.isCurrent ? "success" : "info"}>
+                      {plan.usageLimit === Infinity ? "無制限" : `月${plan.usageLimit}件まで`}
                     </s-badge>
                     {plan.isCurrent && (
-                      <s-badge tone="success">現在のプラン</s-badge>
+                      <s-badge tone="success">✓ 現在のプラン</s-badge>
                     )}
                   </s-stack>
                   <s-text>
-                    <strong>{plan.amount === 0 ? "無料" : `$${plan.amount}/月`}</strong>
+                    <strong>{plan.amount === 0 ? "無料" : `月額 $${plan.amount}`}</strong>
                   </s-text>
                   
-                  {/* 機能アイコン */}
+                  {/* 主な特徴 */}
                   <s-stack direction="inline" gap="base">
-                    <s-badge tone="info">手付金 ✓</s-badge>
-                    <s-badge tone={plan.lineEnabled ? "success" : "warning"}>
-                      LINE {plan.lineEnabled ? "✓" : "×"}
+                    <s-badge tone="info">💰 前払い機能</s-badge>
+                    <s-badge tone={plan.lineEnabled ? "success" : "neutral"}>
+                      💬 LINE {plan.lineEnabled ? "対応" : "なし"}
                     </s-badge>
-                    <s-badge tone={plan.multiShopEnabled ? "success" : "warning"}>
-                      複数店舗 {plan.multiShopEnabled ? "✓" : "×"}
+                    <s-badge tone={plan.multiShopEnabled ? "success" : "neutral"}>
+                      🏢 複数店舗 {plan.multiShopEnabled ? "対応" : "なし"}
                     </s-badge>
                   </s-stack>
                   
+                  {/* 機能リスト */}
                   <s-stack direction="block" gap="base">
                     {plan.features.map((feature, idx) => (
                       <s-text key={idx}>✓ {feature}</s-text>
@@ -221,7 +250,7 @@ export default function BillingPage() {
                     onClick={() => handleSelectPlan(plan.key)}
                     {...(isSubmitting ? { loading: true, disabled: true } : {})}
                   >
-                    {plan.amount > 0 ? "アップグレード" : "ダウングレード"}
+                    {plan.amount > 0 ? "このプランにする" : "無料に戻す"}
                   </s-button>
                 )}
               </s-stack>
@@ -230,25 +259,63 @@ export default function BillingPage() {
         </s-stack>
       </s-section>
 
-      {/* FAQ */}
-      <s-section slot="aside" heading="よくある質問">
+      {/* おすすめ */}
+      <s-section slot="aside" heading="💡 どのプランがいい？">
         <s-stack direction="block" gap="base">
-          <s-stack direction="block" gap="base">
-            <s-text><strong>プラン変更はいつ反映されますか？</strong></s-text>
-            <s-text>
-              アップグレードは即座に反映されます。ダウングレードは次の請求サイクルから適用されます。
-            </s-text>
-          </s-stack>
-          <s-stack direction="block" gap="base">
-            <s-text><strong>上限を超えた場合はどうなりますか？</strong></s-text>
-            <s-text>
-              新しい予約の受付が停止されます。既存の予約には影響ありません。
-            </s-text>
-          </s-stack>
-          <s-stack direction="block" gap="base">
-            <s-text><strong>使用量はいつリセットされますか？</strong></s-text>
-            <s-text>30日ごとにリセットされます。</s-text>
-          </s-stack>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text><strong>🆓 まずは無料で試したい</strong></s-text>
+              <s-text>→ Freeプランでお試しください</s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text><strong>⭐ 個人サロンで使いたい</strong></s-text>
+              <s-text>→ 月50件のStandardがおすすめ</s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text><strong>🚀 LINE通知も使いたい</strong></s-text>
+              <s-text>→ Pro以上でLINE通知が使えます</s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text><strong>👑 複数店舗を運営</strong></s-text>
+              <s-text>→ Maxで全店舗を一括管理！</s-text>
+            </s-stack>
+          </s-box>
+        </s-stack>
+      </s-section>
+
+      {/* FAQ */}
+      <s-section slot="aside" heading="❓ よくある質問">
+        <s-stack direction="block" gap="base">
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text><strong>プラン変更はすぐ反映される？</strong></s-text>
+              <s-text>
+                はい！アップグレードはすぐに使えます。
+                ダウングレードは翌月から適用されます。
+              </s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text><strong>上限に達したらどうなる？</strong></s-text>
+              <s-text>
+                新しい予約の受付が停止します。
+                すでに入っている予約はそのままです。
+              </s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text><strong>予約数はいつリセット？</strong></s-text>
+              <s-text>毎月1日に0件にリセットされます。</s-text>
+            </s-stack>
+          </s-box>
         </s-stack>
       </s-section>
     </s-page>

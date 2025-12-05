@@ -107,7 +107,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         serviceName: updatedBooking.service?.name,
       }).catch((err) => console.error("[LINE] Notification error:", err));
 
-      return { success: true, message: "予約を確定しました" };
+      return { success: true, message: "予約を確定しました！" };
     } else if (action === "cancel") {
       const wasConfirmed = booking.status === "CONFIRMED";
       const updatedBooking = await db.booking.update({
@@ -177,29 +177,115 @@ export default function BookingsPage() {
     });
   };
 
+  const formatDateOnly = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("ja-JP", {
+      month: "short",
+      day: "numeric",
+      weekday: "short",
+      timeZone: "Asia/Tokyo",
+    });
+  };
+
+  const formatTimeOnly = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString("ja-JP", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Asia/Tokyo",
+    });
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "CONFIRMED":
-        return <s-badge tone="success">確定</s-badge>;
+        return <s-badge tone="success">✓ 確定</s-badge>;
       case "PENDING_PAYMENT":
-        return <s-badge tone="warning">支払い待ち</s-badge>;
+        return <s-badge tone="warning">💳 お支払い待ち</s-badge>;
       case "CANCELLED":
-        return <s-badge tone="critical">キャンセル</s-badge>;
+        return <s-badge tone="critical">✕ キャンセル済み</s-badge>;
       default:
         return <s-badge>{status}</s-badge>;
     }
   };
 
+  // 今後の予約（確定済み）を抽出
+  const upcomingBookings = bookings.filter(
+    (b) => b.status === "CONFIRMED" && new Date(b.startAt) > new Date()
+  );
+
+  // 対応が必要な予約（お支払い待ち）
+  const pendingBookings = bookings.filter(
+    (b) => b.status === "PENDING_PAYMENT"
+  );
+
   return (
-    <s-page heading="予約管理">
-      <s-section heading={`予約一覧（${bookings.length}件）`}>
+    <s-page heading="予約を見る">
+      {/* 対応が必要な予約 */}
+      {pendingBookings.length > 0 && (
+        <s-section heading="⚡ 対応が必要（お支払い待ち）">
+          <s-stack direction="block" gap="base">
+            {pendingBookings.map((booking) => (
+              <s-box
+                key={booking.id}
+                padding="base"
+                borderWidth="base"
+                borderRadius="base"
+                background="subdued"
+              >
+                <s-stack direction="block" gap="base">
+                  <s-stack direction="inline" gap="base">
+                    <s-heading>
+                      {formatDateOnly(booking.startAt)} {formatTimeOnly(booking.startAt)}〜
+                    </s-heading>
+                    {getStatusBadge(booking.status)}
+                  </s-stack>
+                  <s-stack direction="inline" gap="base">
+                    <s-text>👤 {booking.resource.name}</s-text>
+                    <s-text>📍 {booking.location.name}</s-text>
+                    {booking.service && (
+                      <s-text>✂️ {booking.service.name}</s-text>
+                    )}
+                  </s-stack>
+                  {(booking.customerName || booking.customerEmail) && (
+                    <s-text>
+                      お客様: {booking.customerName || "お名前なし"}
+                      {booking.customerEmail && ` (${booking.customerEmail})`}
+                    </s-text>
+                  )}
+                  <s-stack direction="inline" gap="base">
+                    <s-button
+                      variant="primary"
+                      onClick={() => handleAction(booking.id, "confirm")}
+                    >
+                      ✓ 確定にする
+                    </s-button>
+                    <s-button
+                      onClick={() => handleAction(booking.id, "cancel")}
+                    >
+                      キャンセルにする
+                    </s-button>
+                  </s-stack>
+                </s-stack>
+              </s-box>
+            ))}
+          </s-stack>
+        </s-section>
+      )}
+
+      {/* メインセクション: 全予約一覧 */}
+      <s-section heading={`📅 すべての予約（${bookings.length}件）`}>
         {bookings.length === 0 ? (
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-heading>予約がありません</s-heading>
+              <s-heading>🎉 まだ予約がありません</s-heading>
               <s-paragraph>
-                ストアフロントから予約が入ると、ここに表示されます。
+                お客様から予約が入ると、ここに表示されます。
               </s-paragraph>
+              <s-paragraph>
+                <s-text>
+                  ストアに予約カレンダーを設置して、お客様からの予約を受け付けましょう！
+                </s-text>
+              </s-paragraph>
+              <s-button variant="primary" href="/app/guide">使い方ガイドを見る</s-button>
             </s-stack>
           </s-box>
         ) : (
@@ -214,19 +300,22 @@ export default function BookingsPage() {
               >
                 <s-stack direction="block" gap="base">
                   <s-stack direction="inline" gap="base">
-                    <s-heading>{formatDateTime(booking.startAt)}</s-heading>
+                    <s-heading>
+                      {formatDateOnly(booking.startAt)} {formatTimeOnly(booking.startAt)}〜
+                    </s-heading>
                     {getStatusBadge(booking.status)}
                   </s-stack>
                   <s-stack direction="inline" gap="base">
-                    <s-text>リソース: {booking.resource.name}</s-text>
-                    <s-text>場所: {booking.location.name}</s-text>
+                    <s-text>👤 {booking.resource.name}</s-text>
+                    <s-text>📍 {booking.location.name}</s-text>
                     {booking.service && (
-                      <s-text>サービス: {booking.service.name}</s-text>
+                      <s-text>✂️ {booking.service.name}</s-text>
                     )}
                   </s-stack>
                   {(booking.customerName || booking.customerEmail) && (
                     <s-text>
-                      顧客: {booking.customerName || "名前なし"} ({booking.customerEmail || "メールなし"})
+                      お客様: {booking.customerName || "お名前なし"}
+                      {booking.customerEmail && ` (${booking.customerEmail})`}
                     </s-text>
                   )}
                   <s-stack direction="inline" gap="base">
@@ -235,21 +324,21 @@ export default function BookingsPage() {
                         variant="primary"
                         onClick={() => handleAction(booking.id, "confirm")}
                       >
-                        確定する
+                        ✓ 確定にする
                       </s-button>
                     )}
                     {booking.status !== "CANCELLED" && (
                       <s-button
                         onClick={() => handleAction(booking.id, "cancel")}
                       >
-                        キャンセル
+                        キャンセルにする
                       </s-button>
                     )}
                     <s-button
                       variant="tertiary"
                       onClick={() => handleAction(booking.id, "delete")}
                     >
-                      削除
+                      🗑️ 削除
                     </s-button>
                   </s-stack>
                 </s-stack>
@@ -259,26 +348,63 @@ export default function BookingsPage() {
         )}
       </s-section>
 
-      <s-section slot="aside" heading="ヘルプ">
+      {/* サイドバー: 今後の予約 */}
+      <s-section slot="aside" heading="📆 今後の予約">
+        {upcomingBookings.length === 0 ? (
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-text>今後の確定予約はありません</s-text>
+          </s-box>
+        ) : (
+          <s-stack direction="block" gap="base">
+            {upcomingBookings.slice(0, 5).map((booking) => (
+              <s-box key={booking.id} padding="base" borderWidth="base" borderRadius="base" background="subdued">
+                <s-stack direction="block" gap="base">
+                  <s-text><strong>{formatDateOnly(booking.startAt)}</strong></s-text>
+                  <s-text>{formatTimeOnly(booking.startAt)}〜 {booking.resource.name}</s-text>
+                </s-stack>
+              </s-box>
+            ))}
+            {upcomingBookings.length > 5 && (
+              <s-text>他 {upcomingBookings.length - 5}件</s-text>
+            )}
+          </s-stack>
+        )}
+      </s-section>
+
+      <s-section slot="aside" heading="📖 ステータスの意味">
         <s-stack direction="block" gap="base">
-          <s-text>
-            <strong>支払い待ち</strong>: カートに追加されたが、まだ決済されていない予約
-          </s-text>
-          <s-text>
-            <strong>確定</strong>: 決済完了または手動で確定された予約
-          </s-text>
-          <s-text>
-            <strong>キャンセル</strong>: キャンセルされた予約
-          </s-text>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text>
+                <strong>💳 お支払い待ち</strong>
+              </s-text>
+              <s-text>お客様がカートに入れたけど、まだお支払いされていない状態です</s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text>
+                <strong>✓ 確定</strong>
+              </s-text>
+              <s-text>お支払い完了！予約が確定しています</s-text>
+            </s-stack>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text>
+                <strong>✕ キャンセル済み</strong>
+              </s-text>
+              <s-text>予約がキャンセルされました</s-text>
+            </s-stack>
+          </s-box>
         </s-stack>
       </s-section>
 
-      <s-section slot="aside" heading="注意">
+      <s-section slot="aside" heading="💡 ヒント">
         <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
           <s-text>
-            開発中は「orders/create」webhookが無効のため、
-            予約確定は手動で行う必要があります。
-            本番環境では自動確定されます。
+            お支払いが完了すると、自動的に「確定」になります。
+            現金払いなど手動で確定する場合は「確定にする」ボタンを押してください。
           </s-text>
         </s-box>
       </s-section>

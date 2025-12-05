@@ -113,7 +113,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const shop = session.shop;
 
   if (!(await isMaxPlan(shop))) {
-    return { success: false, error: "組織機能はMaxプランで利用可能です" };
+    return { success: false, error: "複数店舗管理はMaxプランでご利用いただけます" };
   }
 
   const formData = await request.formData();
@@ -125,7 +125,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const ownerName = formData.get("ownerName") as string;
 
     if (!name || !ownerEmail) {
-      return { success: false, error: "組織名とオーナーメールアドレスは必須です" };
+      return { success: false, error: "グループ名とメールアドレスを入力してください" };
     }
 
     try {
@@ -136,10 +136,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         initialShopId: shop,
       });
 
-      return { success: true, message: "組織を作成しました" };
+      return { success: true, message: "グループを作成しました！" };
     } catch (error) {
       console.error("[Organization] Create error:", error);
-      return { success: false, error: "組織の作成に失敗しました" };
+      return { success: false, error: "グループの作成に失敗しました" };
     }
   }
 
@@ -185,8 +185,8 @@ export default function OrganizationPage() {
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString("ja-JP", {
-      month: "2-digit",
-      day: "2-digit",
+      month: "short",
+      day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
       timeZone: "Asia/Tokyo",
@@ -196,11 +196,11 @@ export default function OrganizationPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "CONFIRMED":
-        return <s-badge tone="success">確定</s-badge>;
+        return <s-badge tone="success">✓ 確定</s-badge>;
       case "PENDING_PAYMENT":
-        return <s-badge tone="warning">支払い待ち</s-badge>;
+        return <s-badge tone="warning">💳 支払い待ち</s-badge>;
       case "CANCELLED":
-        return <s-badge tone="critical">キャンセル</s-badge>;
+        return <s-badge tone="critical">✕ キャンセル</s-badge>;
       default:
         return <s-badge>{status}</s-badge>;
     }
@@ -209,22 +209,26 @@ export default function OrganizationPage() {
   // Maxプラン以外
   if (!canUse) {
     return (
-      <s-page heading="多店舗管理">
+      <s-page heading="複数店舗の管理">
         <s-section>
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-heading>Maxプラン専用機能</s-heading>
+              <s-heading>🔒 Maxプランでご利用いただけます</s-heading>
               <s-paragraph>
-                多店舗管理機能はMaxプラン（$120/月）でご利用いただけます。
+                複数のお店を運営されている方向けの機能です。
+                すべての店舗の予約を1つの画面で確認・管理できます！
               </s-paragraph>
-              <s-paragraph>
-                複数の店舗を1つの組織として管理し、スタッフ権限やクロス店舗分析が可能になります。
-              </s-paragraph>
+              <s-stack direction="block" gap="base">
+                <s-text>✓ 全店舗の予約を一覧で確認</s-text>
+                <s-text>✓ 店舗ごとの予約数を比較</s-text>
+                <s-text>✓ スタッフごとに見られる店舗を制限</s-text>
+                <s-text>✓ 本部での一括管理</s-text>
+              </s-stack>
               <s-paragraph>
                 現在のプラン: <s-badge>{planType}</s-badge>
               </s-paragraph>
-              <s-button variant="primary" url="/app/billing">
-                プランをアップグレード
+              <s-button variant="primary" href="/app/billing">
+                プランを見る →
               </s-button>
             </s-stack>
           </s-box>
@@ -233,25 +237,24 @@ export default function OrganizationPage() {
     );
   }
 
-  // 組織未作成
+  // グループ未作成
   if (!organization) {
     return (
-      <s-page heading="多店舗管理">
-        <s-section heading="組織を作成">
+      <s-page heading="複数店舗の管理">
+        <s-section heading="🎉 はじめての設定">
           {!showCreateForm ? (
             <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
               <s-stack direction="block" gap="base">
-                <s-heading>組織を作成して多店舗管理を開始</s-heading>
+                <s-heading>まずは「グループ」を作りましょう</s-heading>
                 <s-paragraph>
-                  組織を作成すると、複数の店舗を1つのダッシュボードから管理できます。
+                  複数のお店をまとめて「グループ」として登録すると、
+                  すべての予約を1つの画面で確認できるようになります。
                 </s-paragraph>
-                <s-unordered-list>
-                  <s-list-item>全店舗の予約を一括確認</s-list-item>
-                  <s-list-item>スタッフごとのアクセス権限管理</s-list-item>
-                  <s-list-item>クロス店舗の売上分析</s-list-item>
-                </s-unordered-list>
+                <s-stack direction="block" gap="base">
+                  <s-text>💡 「◯◯美容室グループ」「株式会社◯◯」など、わかりやすい名前を付けてください</s-text>
+                </s-stack>
                 <s-button variant="primary" onClick={() => setShowCreateForm(true)}>
-                  組織を作成する
+                  グループを作成する
                 </s-button>
               </s-stack>
             </s-box>
@@ -259,20 +262,19 @@ export default function OrganizationPage() {
             <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
               <s-stack direction="block" gap="base">
                 <s-text-field
-                  label="組織名"
+                  label="グループ名（会社名・店舗グループ名など）"
                   value={formData.name}
                   onChange={(e: any) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="例: 株式会社ABC美容室"
+                  placeholder="例: ◯◯美容室グループ"
                 />
                 <s-text-field
-                  label="オーナーメールアドレス"
-                  type="email"
+                  label="オーナーのメールアドレス"
                   value={formData.ownerEmail}
                   onChange={(e: any) => setFormData({ ...formData, ownerEmail: e.target.value })}
                   placeholder="owner@example.com"
                 />
                 <s-text-field
-                  label="オーナー名（任意）"
+                  label="オーナーの名前（任意）"
                   value={formData.ownerName}
                   onChange={(e: any) => setFormData({ ...formData, ownerName: e.target.value })}
                   placeholder="山田 太郎"
@@ -283,7 +285,7 @@ export default function OrganizationPage() {
                     onClick={handleCreate}
                     {...(isSubmitting ? { loading: true, disabled: true } : {})}
                   >
-                    作成する
+                    ✓ 作成する
                   </s-button>
                   <s-button variant="tertiary" onClick={() => setShowCreateForm(false)}>
                     キャンセル
@@ -297,54 +299,53 @@ export default function OrganizationPage() {
     );
   }
 
-  // 組織ダッシュボード
+  // グループダッシュボード
   return (
-    <s-page heading={organization.name}>
-      <s-button slot="primary-action" variant="primary" url="/app/organization/staff">
-        スタッフ管理
+    <s-page heading={`🏢 ${organization.name}`}>
+      <s-button slot="primary-action" variant="primary" href="/app/organization/staff">
+        👥 スタッフ管理
       </s-button>
 
       {/* 統計サマリー */}
-      <s-section heading="概要">
+      <s-section heading="📊 グループ全体の状況">
         <s-stack direction="inline" gap="base">
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-text>店舗数</s-text>
-              <s-heading>{stats?.totalShops || 0}</s-heading>
+              <s-text>🏪 店舗数</s-text>
+              <s-heading>{stats?.totalShops || 0}店舗</s-heading>
             </s-stack>
           </s-box>
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-text>スタッフ数</s-text>
-              <s-heading>{stats?.totalStaff || 0}</s-heading>
+              <s-text>👤 スタッフ</s-text>
+              <s-heading>{stats?.totalStaff || 0}人</s-heading>
             </s-stack>
           </s-box>
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-text>今日の予約</s-text>
-              <s-heading>{stats?.todayBookings || 0}</s-heading>
+              <s-text>📅 今日の予約</s-text>
+              <s-heading>{stats?.todayBookings || 0}件</s-heading>
             </s-stack>
           </s-box>
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-text>今月の予約</s-text>
-              <s-heading>{stats?.totalMonthUsage || 0}</s-heading>
+              <s-text>📈 今月の合計</s-text>
+              <s-heading>{stats?.totalMonthUsage || 0}件</s-heading>
             </s-stack>
           </s-box>
         </s-stack>
       </s-section>
 
       {/* 店舗別統計 */}
-      <s-section heading="店舗別実績">
+      <s-section heading="🏪 店舗ごとの予約状況">
         <s-stack direction="block" gap="base">
           {stats?.shopStats.map((shop) => (
             <s-box key={shop.id} padding="base" borderWidth="base" borderRadius="base" background="subdued">
               <s-stack direction="inline" gap="base">
                 <s-stack direction="block" gap="base">
-                  <s-heading>{shop.name}</s-heading>
-                  <s-text>{shop.id}</s-text>
+                  <s-heading>📍 {shop.name}</s-heading>
                 </s-stack>
-                <s-stack direction="inline" gap="loose">
+                <s-stack direction="inline" gap="base">
                   <s-stack direction="block" gap="base">
                     <s-text>今日</s-text>
                     <s-text><strong>{shop.todayBookings}件</strong></s-text>
@@ -357,14 +358,19 @@ export default function OrganizationPage() {
               </s-stack>
             </s-box>
           ))}
+          {(!stats?.shopStats || stats.shopStats.length === 0) && (
+            <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+              <s-text>店舗データがありません</s-text>
+            </s-box>
+          )}
         </s-stack>
       </s-section>
 
       {/* 全店舗予約一覧 */}
-      <s-section heading="全店舗予約一覧（最新20件）">
+      <s-section heading="📋 最新の予約（全店舗）">
         {recentBookings.length === 0 ? (
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
-            <s-text>予約がありません</s-text>
+            <s-text>まだ予約がありません</s-text>
           </s-box>
         ) : (
           <s-stack direction="block" gap="base">
@@ -378,11 +384,11 @@ export default function OrganizationPage() {
                       <s-badge tone="info">{booking.shop.name || booking.shop.id}</s-badge>
                     </s-stack>
                     <s-text>
-                      {booking.location.name} / {booking.resource.name}
+                      📍 {booking.location.name} / 👤 {booking.resource.name}
                       {booking.service && ` / ${booking.service.name}`}
                     </s-text>
                     {booking.customerName && (
-                      <s-text>顧客: {booking.customerName}</s-text>
+                      <s-text>お客様: {booking.customerName}</s-text>
                     )}
                   </s-stack>
                 </s-stack>
@@ -393,7 +399,7 @@ export default function OrganizationPage() {
       </s-section>
 
       {/* サイドバー */}
-      <s-section slot="aside" heading="組織情報">
+      <s-section slot="aside" heading="📋 グループ情報">
         <s-stack direction="block" gap="base">
           <s-stack direction="block" gap="base">
             <s-text><strong>オーナー</strong></s-text>
@@ -403,22 +409,19 @@ export default function OrganizationPage() {
           <s-stack direction="block" gap="base">
             <s-text><strong>所属店舗</strong></s-text>
             {organization.shops.map((shop) => (
-              <s-text key={shop.id}>{shop.name || shop.id}</s-text>
+              <s-text key={shop.id}>📍 {shop.name || shop.id}</s-text>
             ))}
           </s-stack>
         </s-stack>
       </s-section>
 
-      <s-section slot="aside" heading="クイックリンク">
+      <s-section slot="aside" heading="🔗 クイックリンク">
         <s-stack direction="block" gap="base">
-          <s-button variant="tertiary" url="/app/organization/staff">
-            スタッフ管理
+          <s-button variant="tertiary" href="/app/organization/staff">
+            👥 スタッフ管理
           </s-button>
-          <s-button variant="tertiary" url="/app/organization/shops">
-            店舗管理
-          </s-button>
-          <s-button variant="tertiary" url="/app/organization/settings">
-            組織設定
+          <s-button variant="tertiary" href="/app/bookings">
+            📅 予約を見る
           </s-button>
         </s-stack>
       </s-section>

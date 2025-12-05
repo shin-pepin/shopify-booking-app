@@ -79,7 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const shop = session.shop;
 
   if (!(await canUseLine(shop))) {
-    return { success: false, error: "LINE連携はPro/Maxプランで利用可能です" };
+    return { success: false, error: "LINE通知はPro/Maxプランでご利用いただけます" };
   }
 
   const formData = await request.formData();
@@ -117,7 +117,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         reminderHours,
       });
 
-      return { success: true, message: "設定を保存しました" };
+      return { success: true, message: "設定を保存しました！" };
     } catch (error) {
       console.error("[LINE Settings] Save error:", error);
       return { success: false, error: "保存に失敗しました" };
@@ -138,7 +138,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
       return {
         success: true,
-        message: config.isEnabled ? "LINE連携を無効にしました" : "LINE連携を有効にしました",
+        message: config.isEnabled ? "LINE通知を停止しました" : "LINE通知を開始しました！",
       };
     } catch (error) {
       return { success: false, error: "切り替えに失敗しました" };
@@ -198,19 +198,30 @@ export default function LineSettingsPage() {
   // Pro/Maxプラン以外はアクセス不可
   if (!canUse) {
     return (
-      <s-page heading="LINE連携設定">
+      <s-page heading="LINE通知">
         <s-section>
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-heading>Pro/Maxプラン専用機能</s-heading>
+              <s-heading>🔒 Proプラン以上でご利用いただけます</s-heading>
               <s-paragraph>
-                LINE連携機能はProプラン（$49/月）またはMaxプラン（$120/月）でご利用いただけます。
+                LINE通知を使うと、予約が入った時にお客様のLINEに自動でお知らせを送れます。
+              </s-paragraph>
+              <s-stack direction="block" gap="base">
+                <s-text>✓ 予約確定のお知らせ</s-text>
+                <s-text>✓ 予約日の前日にリマインダー</s-text>
+                <s-text>✓ キャンセル通知</s-text>
+              </s-stack>
+              <s-paragraph>
+                <s-text>
+                  LINEで連絡が届くと、お客様は予約を忘れにくくなり、
+                  無断キャンセルが減ります！
+                </s-text>
               </s-paragraph>
               <s-paragraph>
                 現在のプラン: <s-badge>{planType}</s-badge>
               </s-paragraph>
-              <s-button variant="primary" url="/app/billing">
-                プランをアップグレード
+              <s-button variant="primary" href="/app/billing">
+                プランを見る →
               </s-button>
             </s-stack>
           </s-box>
@@ -220,28 +231,28 @@ export default function LineSettingsPage() {
   }
 
   return (
-    <s-page heading="LINE連携設定">
+    <s-page heading="LINE通知の設定">
       <s-button
         slot="primary-action"
         variant="primary"
         onClick={handleSave}
         {...(isSubmitting ? { loading: true, disabled: true } : {})}
       >
-        設定を保存
+        💾 設定を保存
       </s-button>
 
       {/* ステータス */}
-      <s-section heading="連携ステータス">
+      <s-section heading="📊 現在の状態">
         <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
           <s-stack direction="inline" gap="base">
             <s-stack direction="block" gap="base">
               <s-stack direction="inline" gap="base">
                 <s-heading>LINE通知</s-heading>
                 <s-badge tone={config?.isEnabled ? "success" : "warning"}>
-                  {config?.isEnabled ? "有効" : "無効"}
+                  {config?.isEnabled ? "✓ 送信中" : "停止中"}
                 </s-badge>
               </s-stack>
-              <s-text>連携ユーザー数: {linkedUsersCount}人</s-text>
+              <s-text>LINE連携済みのお客様: {linkedUsersCount}人</s-text>
             </s-stack>
             {config && (
               <s-button
@@ -249,7 +260,7 @@ export default function LineSettingsPage() {
                 onClick={handleToggle}
                 {...(isSubmitting ? { loading: true, disabled: true } : {})}
               >
-                {config.isEnabled ? "無効にする" : "有効にする"}
+                {config.isEnabled ? "通知を停止する" : "通知を開始する"}
               </s-button>
             )}
           </s-stack>
@@ -257,70 +268,75 @@ export default function LineSettingsPage() {
       </s-section>
 
       {/* API設定 */}
-      <s-section heading="LINE Messaging API設定">
+      <s-section heading="🔧 LINE Developerの設定情報">
         <s-stack direction="block" gap="base">
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
-              <s-text><strong>Webhook URL</strong></s-text>
-              <s-text>LINE Developers ConsoleでこのURLを設定してください</s-text>
+              <s-text><strong>📋 Webhook URL（これをLINEに設定します）</strong></s-text>
+              <s-paragraph>
+                <s-text>
+                  LINE Developers Consoleで「Webhook URL」にこのURLを設定してください。
+                </s-text>
+              </s-paragraph>
               <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
                 <s-text>{webhookUrl}</s-text>
               </s-box>
+              <s-text>↑ このURLをコピーして貼り付けてください</s-text>
             </s-stack>
           </s-box>
 
           <s-text-field
-            label="Channel ID"
+            label="Channel ID（チャネルID）"
             value={formData.channelId}
             onChange={(e: any) => setFormData({ ...formData, channelId: e.target.value })}
-            placeholder="LINE Channel ID"
+            placeholder="1234567890"
           />
 
           <s-text-field
-            label="Channel Secret"
+            label="Channel Secret（チャネルシークレット）"
             value={formData.channelSecret}
             onChange={(e: any) => setFormData({ ...formData, channelSecret: e.target.value })}
-            placeholder="LINE Channel Secret"
+            placeholder="半角英数字32文字"
             type="password"
           />
 
           <s-text-field
-            label="Channel Access Token"
+            label="Access Token（アクセストークン）"
             value={formData.accessToken}
             onChange={(e: any) => setFormData({ ...formData, accessToken: e.target.value })}
-            placeholder="LINE Channel Access Token"
+            placeholder="長いトークン文字列"
             type="password"
           />
         </s-stack>
       </s-section>
 
       {/* 通知設定 */}
-      <s-section heading="通知設定">
+      <s-section heading="📬 いつ通知を送りますか？">
         <s-stack direction="block" gap="base">
           <s-checkbox
             checked={formData.notifyOnConfirm}
             onChange={(e: any) => setFormData({ ...formData, notifyOnConfirm: e.target.checked })}
           >
-            予約確定時に通知する
+            ✅ 予約が確定した時
           </s-checkbox>
 
           <s-checkbox
             checked={formData.notifyOnCancel}
             onChange={(e: any) => setFormData({ ...formData, notifyOnCancel: e.target.checked })}
           >
-            予約キャンセル時に通知する
+            ❌ 予約がキャンセルされた時
           </s-checkbox>
 
           <s-checkbox
             checked={formData.notifyReminder}
             onChange={(e: any) => setFormData({ ...formData, notifyReminder: e.target.checked })}
           >
-            予約リマインダーを送信する
+            ⏰ 予約日の前にリマインダーを送る
           </s-checkbox>
 
           {formData.notifyReminder && (
             <s-text-field
-              label="リマインダー送信タイミング（時間前）"
+              label="何時間前にリマインダーを送りますか？"
               type="number"
               value={String(formData.reminderHours)}
               onChange={(e: any) =>
@@ -334,34 +350,37 @@ export default function LineSettingsPage() {
       </s-section>
 
       {/* セットアップガイド */}
-      <s-section slot="aside" heading="セットアップ手順">
+      <s-section slot="aside" heading="📖 設定のしかた">
         <s-stack direction="block" gap="base">
-          <s-ordered-list>
-            <s-list-item>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text><strong>かんたん5ステップ</strong></s-text>
               <s-text>
-                <a href="https://developers.line.biz/console/" target="_blank" rel="noopener noreferrer">
-                  LINE Developers Console
-                </a>
-                でチャネルを作成
+                ① <a href="https://developers.line.biz/console/" target="_blank" rel="noopener noreferrer">LINE Developers</a> にログイン
               </s-text>
-            </s-list-item>
-            <s-list-item><s-text>Channel ID, Secret, Access Tokenを取得</s-text></s-list-item>
-            <s-list-item><s-text>Webhook URLを設定</s-text></s-list-item>
-            <s-list-item><s-text>Webhookの利用を「ON」に設定</s-text></s-list-item>
-            <s-list-item><s-text>自動応答を「OFF」に設定</s-text></s-list-item>
-          </s-ordered-list>
+              <s-text>② 「新規チャネル作成」→「Messaging API」を選択</s-text>
+              <s-text>③ チャネル基本情報からID・シークレットをコピー</s-text>
+              <s-text>④ Messaging API設定から「アクセストークン」を発行</s-text>
+              <s-text>⑤ Webhook URLを設定してONにする</s-text>
+            </s-stack>
+          </s-box>
         </s-stack>
       </s-section>
 
-      <s-section slot="aside" heading="ユーザー連携">
+      <s-section slot="aside" heading="💡 お客様への案内">
         <s-stack direction="block" gap="base">
-          <s-text>
-            顧客がLINE通知を受け取るには、ショップのマイページまたは
-            チェックアウト完了画面から「LINE連携」を行う必要があります。
-          </s-text>
-          <s-text>
-            連携済みユーザーには、予約確定・キャンセル時に自動でLINE通知が送信されます。
-          </s-text>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-stack direction="block" gap="base">
+              <s-text>
+                LINE通知を送るには、お客様に<strong>お店のLINE公式アカウント</strong>を
+                友だち追加してもらう必要があります。
+              </s-text>
+              <s-text>
+                店頭にQRコードを置いたり、
+                注文完了ページに案内を表示するのがおすすめです！
+              </s-text>
+            </s-stack>
+          </s-box>
         </s-stack>
       </s-section>
     </s-page>

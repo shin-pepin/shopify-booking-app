@@ -253,10 +253,10 @@ export default function ResourceDetailPage() {
     if (fetcher.data?.success) {
       switch (fetcher.data.action) {
         case "updated":
-          shopify.toast.show("リソース情報を更新しました");
+          shopify.toast.show("名前を変更しました！");
           break;
         case "scheduleSaved":
-          shopify.toast.show("スケジュールを保存しました");
+          shopify.toast.show("シフトを保存しました！");
           break;
       }
     } else if (fetcher.data?.error) {
@@ -316,27 +316,40 @@ export default function ResourceDetailPage() {
     }
   };
 
+  const getTypeIcon = (type: ResourceType) => {
+    switch (type) {
+      case "STAFF":
+        return "👤";
+      case "ROOM":
+        return "🚪";
+      case "EQUIPMENT":
+        return "🔧";
+      default:
+        return "📦";
+    }
+  };
+
   return (
-    <s-page heading={resource.name}>
+    <s-page heading={`${getTypeIcon(resource.type)} ${resource.name}`}>
       <s-button
         slot="primary-action"
         variant="primary"
         onClick={handleSaveSchedule}
         {...(isLoading ? { loading: true } : {})}
       >
-        スケジュール保存
+        💾 シフトを保存
       </s-button>
 
       {/* 基本情報セクション */}
-      <s-section heading="基本情報">
+      <s-section heading="📝 基本情報">
         <s-stack direction="block" gap="base">
           <s-stack direction="inline" gap="base">
-            <s-text>タイプ:</s-text>
+            <s-text>種類:</s-text>
             <s-badge>{getTypeLabel(resource.type)}</s-badge>
           </s-stack>
 
           <s-text-field
-            label="リソース名"
+            label="名前を変更"
             value={resourceName}
             onChange={(e: CustomEvent) => setResourceName(e.detail as string)}
           />
@@ -346,37 +359,42 @@ export default function ResourceDetailPage() {
             onClick={handleUpdateResource}
             {...(isLoading ? { loading: true } : {})}
           >
-            基本情報を更新
+            名前を更新
           </s-button>
         </s-stack>
       </s-section>
 
-      {/* スケジュール設定セクション */}
-      <s-section heading="シフト設定">
+      {/* シフト設定セクション */}
+      <s-section heading="📅 シフト設定">
         {locations.length === 0 ? (
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
-            <s-text>
-              ⚠️ ロケーションが未登録です。
-              <s-link href="/app">ホーム</s-link>からロケーションを同期してください。
-            </s-text>
+            <s-stack direction="block" gap="base">
+              <s-text>⚠️ 店舗情報がまだ読み込まれていません。</s-text>
+              <s-text>
+                <s-link href="/app">ホーム</s-link>から店舗情報を読み込んでください。
+              </s-text>
+            </s-stack>
           </s-box>
         ) : (
           <s-stack direction="block" gap="base">
             <s-select
-              label="ロケーション（店舗）を選択"
+              label="どの店舗のシフトを設定しますか？"
               value={selectedLocationId}
               onChange={(e: CustomEvent) => setSelectedLocationId(e.detail as string)}
               options={locations.map((loc) => ({
-                label: loc.name,
+                label: `📍 ${loc.name}`,
                 value: loc.id,
               }))}
             />
 
-            <s-paragraph>
-              <s-text>
-                曜日ごとに営業時間を設定します。チェックを外すと休業日になります。
-              </s-text>
-            </s-paragraph>
+            <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+              <s-stack direction="block" gap="base">
+                <s-text>
+                  <strong>💡 使い方:</strong> チェックを入れた曜日が出勤日になります。
+                  チェックを外すと休みの日になります。
+                </s-text>
+              </s-stack>
+            </s-box>
 
             <s-stack direction="block" gap="base">
               {DAYS_OF_WEEK.map((day) => {
@@ -401,7 +419,9 @@ export default function ResourceDetailPage() {
                           updateSchedule(day.value, "isAvailable", e.detail as boolean)
                         }
                       >
-                        <s-text>{schedule.isAvailable ? <strong>{day.label}</strong> : day.label}</s-text>
+                        <s-text>
+                          {schedule.isAvailable ? <strong>{day.label}</strong> : day.label}
+                        </s-text>
                       </s-checkbox>
 
                       {schedule.isAvailable && (
@@ -432,44 +452,60 @@ export default function ResourceDetailPage() {
                         </s-stack>
                       )}
 
-                      {!schedule.isAvailable && <s-text>休業日</s-text>}
+                      {!schedule.isAvailable && <s-badge>休み</s-badge>}
                     </s-stack>
                   </s-box>
                 );
               })}
             </s-stack>
+
+            <s-button variant="primary" onClick={handleSaveSchedule} {...(isLoading ? { loading: true } : {})}>
+              💾 シフトを保存
+            </s-button>
           </s-stack>
         )}
       </s-section>
 
       {/* サイドバー: ヘルプ */}
-      <s-section slot="aside" heading="シフト設定のヒント">
+      <s-section slot="aside" heading="💡 シフト設定のコツ">
         <s-stack direction="block" gap="base">
-          <s-paragraph>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-text>
               スタッフは複数の店舗で働くことができます。
-              ロケーションを切り替えて、各店舗でのシフトを設定してください。
+              上の「店舗を選ぶ」を切り替えて、各店舗でのシフトを設定してください。
             </s-text>
-          </s-paragraph>
-          <s-paragraph>
-            <s-text>例: 月・水は渋谷店、火・木は原宿店で勤務</s-text>
-          </s-paragraph>
+          </s-box>
+          <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
+            <s-text>
+              <strong>例:</strong>
+              <br />
+              ・月・水・金は渋谷店
+              <br />
+              ・火・木は原宿店
+            </s-text>
+          </s-box>
         </s-stack>
       </s-section>
 
-      <s-section slot="aside" heading="現在のスケジュール">
+      <s-section slot="aside" heading="📋 現在のシフト">
         <s-stack direction="block" gap="base">
           {currentSchedules.length === 0 ? (
-            <s-text>スケジュール未設定</s-text>
+            <s-text>まだシフトが設定されていません</s-text>
           ) : (
             currentSchedules.map((s) => (
               <s-text key={s.id}>
                 {DAYS_OF_WEEK.find((d) => d.value === s.dayOfWeek)?.short}:{" "}
-                {s.startTime}-{s.endTime}
+                {s.startTime} 〜 {s.endTime}
               </s-text>
             ))
           )}
         </s-stack>
+      </s-section>
+
+      <s-section slot="aside">
+        <s-button variant="tertiary" onClick={() => navigate("/app/resources")}>
+          ← 一覧に戻る
+        </s-button>
       </s-section>
     </s-page>
   );

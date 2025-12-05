@@ -18,14 +18,14 @@ export default function App() {
   return (
     <AppProvider embedded apiKey={apiKey}>
       <s-app-nav>
-        <s-link href="/app">ホーム</s-link>
-        <s-link href="/app/bookings">予約管理</s-link>
-        <s-link href="/app/resources">リソース管理</s-link>
-        <s-link href="/app/organization">多店舗管理</s-link>
-        <s-link href="/app/line">LINE連携</s-link>
-        <s-link href="/app/settings">手付金設定</s-link>
-        <s-link href="/app/billing">料金プラン</s-link>
-        <s-link href="/app/guide">使い方ガイド</s-link>
+        <s-link href="/app">🏠 ホーム</s-link>
+        <s-link href="/app/bookings">📅 予約を見る</s-link>
+        <s-link href="/app/resources">👤 スタッフ・部屋</s-link>
+        <s-link href="/app/settings">💰 前払い</s-link>
+        <s-link href="/app/line">💬 LINE通知</s-link>
+        <s-link href="/app/organization">🏢 複数店舗</s-link>
+        <s-link href="/app/billing">💎 プラン</s-link>
+        <s-link href="/app/guide">❓ 使い方</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>
