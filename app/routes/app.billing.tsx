@@ -177,10 +177,22 @@ export default function BillingPage() {
             </s-stack>
             {usage.usageLimit !== Infinity && (
               <s-box padding="none">
-                <s-progress-bar
-                  progress={Math.min(usage.usagePercentage, 100)}
-                  tone={getProgressBarTone(usage.usagePercentage)}
-                />
+                <div style={{
+                  width: "100%",
+                  height: "8px",
+                  backgroundColor: "#e5e7eb",
+                  borderRadius: "4px",
+                  overflow: "hidden",
+                  marginBottom: "8px"
+                }}>
+                  <div style={{
+                    width: `${Math.min(usage.usagePercentage, 100)}%`,
+                    height: "100%",
+                    backgroundColor: usage.usagePercentage >= 90 ? "#dc2626" : usage.usagePercentage >= 70 ? "#f59e0b" : "#10b981",
+                    borderRadius: "4px",
+                    transition: "width 0.3s ease"
+                  }} />
+                </div>
                 <s-text>
                   {usage.usageLimit - usage.currentUsage > 0
                     ? `あと${usage.usageLimit - usage.currentUsage}件の予約を受け付けられます`
@@ -245,13 +257,28 @@ export default function BillingPage() {
                   </s-stack>
                 </s-stack>
                 {!plan.isCurrent && (
-                  <s-button
-                    variant={plan.amount > 0 ? "primary" : "tertiary"}
+                  <button
+                    type="button"
                     onClick={() => handleSelectPlan(plan.key)}
-                    {...(isSubmitting ? { loading: true, disabled: true } : {})}
+                    disabled={isSubmitting}
+                    style={{
+                      padding: "10px 20px",
+                      border: plan.amount > 0 ? "none" : "1px solid #ddd",
+                      borderRadius: "8px",
+                      backgroundColor: plan.amount > 0 ? "#008060" : "white",
+                      color: plan.amount > 0 ? "white" : "#333",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      cursor: isSubmitting ? "not-allowed" : "pointer",
+                      opacity: isSubmitting ? 0.6 : 1,
+                      whiteSpace: "nowrap",
+                      alignSelf: "flex-start",
+                      height: "fit-content",
+                      marginLeft: "auto",
+                    }}
                   >
-                    {plan.amount > 0 ? "このプランにする" : "無料に戻す"}
-                  </s-button>
+                    {isSubmitting ? "処理中..." : (plan.amount > 0 ? "このプランにする" : "無料に戻す")}
+                  </button>
                 )}
               </s-stack>
             </s-box>

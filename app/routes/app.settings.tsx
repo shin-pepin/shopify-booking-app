@@ -218,7 +218,7 @@ export default function SettingsPage() {
           <s-stack direction="block" gap="base">
             <s-heading>💡 前払い（デポジット）とは？</s-heading>
             <s-paragraph>
-              予約時に全額ではなく、<strong>一部だけ先にお支払い</strong>いただく仕組みです。
+              予約時に全額ではなく、一部だけ先にお支払いいただく仕組みです。<br/>
               残りは来店時にお支払いいただきます。
             </s-paragraph>
             <s-stack direction="inline" gap="base">

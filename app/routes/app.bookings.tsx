@@ -278,12 +278,8 @@ export default function BookingsPage() {
             <s-stack direction="block" gap="base">
               <s-heading>まだ予約がありません</s-heading>
               <s-paragraph>
-                お客様から予約が入ると、ここに表示されます。
-              </s-paragraph>
-              <s-paragraph>
-                <s-text>
-                  ストアに予約カレンダーを設置して、お客様からの予約を受け付けましょう！
-                </s-text>
+                お客様から予約が入ると、ここに表示されます。<br />
+                ストアに予約カレンダーを設置して、お客様からの予約を受け付けましょう！
               </s-paragraph>
               <s-button variant="primary" href="/app/guide">使い方ガイドを見る</s-button>
             </s-stack>

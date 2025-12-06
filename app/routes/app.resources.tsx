@@ -346,14 +346,25 @@ export default function ResourcesPage() {
                     </s-text>
                   </s-stack>
                   <s-stack direction="inline" gap="base">
-                    <s-button
-                      variant="primary"
+                    <button
                       onClick={() => {
                         navigate(`/app/resources/${resource.id}`);
                       }}
+                      style={{
+                        backgroundColor: "#008060",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "10px",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        height: "fit-content",
+                        marginLeft: "auto",
+                      }}
                     >
                       シフトを設定
-                    </s-button>
+                    </button>
                     <s-button
                       variant="tertiary"
                       onClick={() => {

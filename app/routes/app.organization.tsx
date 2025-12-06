@@ -224,9 +224,9 @@ export default function OrganizationPage() {
                 <s-text>✓ スタッフごとに見られる店舗を制限</s-text>
                 <s-text>✓ 本部での一括管理</s-text>
               </s-stack>
-              <s-paragraph>
+              <s-stack direction="inline" gap="base">
                 現在のプラン: <s-badge>{planType}</s-badge>
-              </s-paragraph>
+              </s-stack>
               <s-button variant="primary" href="/app/billing">
                 プランを見る →
               </s-button>

@@ -250,7 +250,7 @@ export default function Index() {
               <s-heading>あと少しで予約を受け付けられます！</s-heading>
               <s-paragraph>
                 かんたん3ステップで、お客様からの予約を受け付けられるようになります。
-                むずかしい作業は何もありません。順番に進めてみましょう！
+                むずかしい作業はありません。順番に進めてみましょう！
               </s-paragraph>
               
               <s-stack direction="block" gap="base">
@@ -332,10 +332,22 @@ export default function Index() {
             {/* プログレスバー */}
             {usage.usageLimit !== Infinity && (
               <s-box padding="none">
-                <s-progress-bar
-                  progress={Math.min(usage.usagePercentage, 100)}
-                  tone={getProgressBarTone(usage.usagePercentage)}
-                />
+                <div style={{
+                  width: "100%",
+                  height: "8px",
+                  backgroundColor: "#e5e7eb",
+                  borderRadius: "4px",
+                  overflow: "hidden",
+                  marginBottom: "8px"
+                }}>
+                  <div style={{
+                    width: `${Math.min(usage.usagePercentage, 100)}%`,
+                    height: "100%",
+                    backgroundColor: usage.usagePercentage >= 90 ? "#dc2626" : usage.usagePercentage >= 70 ? "#f59e0b" : "#10b981",
+                    borderRadius: "4px",
+                    transition: "width 0.3s ease"
+                  }} />
+                </div>
                 <s-stack direction="inline" gap="base">
                   <s-text>
                     {usage.remaining > 0 

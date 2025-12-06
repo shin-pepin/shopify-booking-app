@@ -217,9 +217,9 @@ export default function LineSettingsPage() {
                   無断キャンセルが減ります！
                 </s-text>
               </s-paragraph>
-              <s-paragraph>
+              <s-stack direction="inline" gap="base">
                 現在のプラン: <s-badge>{planType}</s-badge>
-              </s-paragraph>
+              </s-stack>
               <s-button variant="primary" href="/app/billing">
                 プランを見る →
               </s-button>

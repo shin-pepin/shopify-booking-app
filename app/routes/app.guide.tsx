@@ -15,12 +15,7 @@ export default function GuidePage() {
             <s-heading>🎉 ようこそ！予約システムへ</s-heading>
             <s-paragraph>
               このアプリを使えば、あなたのお店のウェブサイトで予約を受け付けられるようになります！
-            </s-paragraph>
-            <s-paragraph>
-              <s-text>
-                むずかしい作業は何もありません。
-                <strong>たった3ステップ</strong>で、お客様からの予約を受け付けられます。
-              </s-text>
+              むずかしい作業はありません。たった3ステップで、お客様からの予約を受け付けられます。
             </s-paragraph>
           </s-stack>
         </s-box>
