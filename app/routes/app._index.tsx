@@ -116,13 +116,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   try {
     // Shopify Admin GraphQL APIでロケーション一覧を取得
-    const response = await admin.graphql(
-      `#graphql
+  const response = await admin.graphql(
+    `#graphql
         query getLocations {
           locations(first: 50) {
-            edges {
-              node {
-                id
+              edges {
+                node {
+                  id
                 name
                 address {
                   address1
@@ -141,7 +141,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       `
     );
 
-    const responseJson = await response.json();
+  const responseJson = await response.json();
     const locations = responseJson.data?.locations?.edges || [];
 
     // 各ロケーションをDBに同期
@@ -248,10 +248,10 @@ export default function Index() {
           <s-box padding="base" borderWidth="base" borderRadius="base" background="subdued">
             <s-stack direction="block" gap="base">
               <s-heading>あと少しで予約を受け付けられます！</s-heading>
-              <s-paragraph>
+        <s-paragraph>
                 かんたん3ステップで、お客様からの予約を受け付けられるようになります。
                 むずかしい作業はありません。順番に進めてみましょう！
-              </s-paragraph>
+        </s-paragraph>
               
               <s-stack direction="block" gap="base">
                 <s-box padding="base" borderWidth="base" borderRadius="base" background={locations.length > 0 ? "subdued" : "transparent"}>
@@ -401,7 +401,7 @@ export default function Index() {
                 </s-text>
               </s-paragraph>
             </s-stack>
-          </s-box>
+              </s-box>
         ) : (
           <s-stack direction="block" gap="base">
             {locations.map((location) => (
@@ -428,7 +428,7 @@ export default function Index() {
                 </s-stack>
               </s-box>
             ))}
-          </s-stack>
+            </s-stack>
         )}
       </s-section>
 

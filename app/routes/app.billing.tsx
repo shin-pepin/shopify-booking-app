@@ -262,7 +262,7 @@ export default function BillingPage() {
                     onClick={() => handleSelectPlan(plan.key)}
                     disabled={isSubmitting}
                     style={{
-                      padding: "10px 20px",
+                      padding: "10px",
                       border: plan.amount > 0 ? "none" : "1px solid #ddd",
                       borderRadius: "8px",
                       backgroundColor: plan.amount > 0 ? "#008060" : "white",

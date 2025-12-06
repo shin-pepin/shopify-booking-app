@@ -337,7 +337,7 @@ export default function ResourceDetailPage() {
         onClick={handleSaveSchedule}
         {...(isLoading ? { loading: true } : {})}
       >
-        💾 シフトを保存
+        シフトを保存
       </s-button>
 
       {/* 基本情報セクション */}
@@ -460,7 +460,7 @@ export default function ResourceDetailPage() {
             </s-stack>
 
             <s-button variant="primary" onClick={handleSaveSchedule} {...(isLoading ? { loading: true } : {})}>
-              💾 シフトを保存
+              シフトを保存
             </s-button>
           </s-stack>
         )}
